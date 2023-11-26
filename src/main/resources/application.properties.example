@@ -1,0 +1,19 @@
+#logging
+logging.level.org.springframework.data=debug
+logging.level.=error
+
+#database
+spring.datasource.url=jdbc:sqlserver://localhost;encrypt=true;trustServerCertificate=true;databaseName=Eveworkbench-AssetTracker-Dev
+spring.datasource.username=sa
+spring.datasource.password=password
+
+#jpa
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql = true
+spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.SQLServerDialect
+spring.jpa.generate-ddl=true
+spring.jpa.hibernate.ddl-auto=update
+
+#eve application
+esi.clientid=
+esi.clientsecret=
