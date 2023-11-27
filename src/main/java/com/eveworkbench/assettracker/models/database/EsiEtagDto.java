@@ -1,10 +1,6 @@
 package com.eveworkbench.assettracker.models.database;
 
-import com.sun.jdi.LongValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -20,10 +16,12 @@ public class EsiEtagDto {
     public static final String TABLE_NAME = "EsiEtags";
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(length = 2048)
     private String url;
+
     private String etag;
 
     @CreationTimestamp
