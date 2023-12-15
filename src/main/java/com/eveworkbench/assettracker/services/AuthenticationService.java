@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.net.URISyntaxException;
+import java.security.InvalidParameterException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
@@ -47,6 +48,14 @@ public class AuthenticationService {
     // get the character dto from the oauth response
     private CharacterDto getCharacterFromOAuthResponse(OAuthResponse oAuthResponse)
     {
+        if(oAuthResponse == null) {
+            throw new IllegalArgumentException("OAuthResponse cannot be empty");
+        }
+
+        if(oAuthResponse.access_token == null || oAuthResponse.access_token.isEmpty()) {
+            throw new RuntimeException("Access token cannot be empty");
+        }
+
         // decode the jwt access_token
         Map<String, Claim> claims = JWT.decode(oAuthResponse.access_token).getClaims();
 
@@ -57,7 +66,7 @@ public class AuthenticationService {
         // extract the character id from the JTW subject
         Pattern p = Pattern.compile("^CHARACTER:EVE:([0-9]+)$");
         Matcher m = p.matcher(claims.get("sub").asString());
-        if(m.find()) {
+        if (m.find()) {
             characterId = Integer.parseInt(m.group(1));
         } else {
             characterId = null;
@@ -88,16 +97,6 @@ public class AuthenticationService {
 
             return dto;
         }
-    }
-
-    // create JWT token for the character id
-    public String createToken(int characterId) throws Exception {
-        Optional<CharacterDto> character = characterRepository.findById(characterId);
-        if(character.isEmpty()) {
-            throw new Exception("Failed to get character with requested id: " + characterId);
-        }
-
-        return createToken(character.get());
     }
 
     // create JWT token for the character dto

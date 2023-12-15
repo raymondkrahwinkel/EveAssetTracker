@@ -49,7 +49,7 @@ public class EsiService {
 
         // check if the code is not empty
         if(code.isEmpty()) {
-            throw new InvalidParameterException("code cannot be empty");
+            throw new IllegalArgumentException("code cannot be empty");
         }
 
         // setup the post form data

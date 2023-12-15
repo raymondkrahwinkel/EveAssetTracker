@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 @TestPropertySource(locations="classpath:application-test.properties")
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT) // this is needed because we have a base setup for the httpClient and one test that doesn't use httpClient
-public class EsiServiceTest {
+public class EsiServiceTests {
     @InjectMocks
     private EsiService esiService;
 
@@ -60,7 +60,7 @@ public class EsiServiceTest {
     @Test
     void getOauthInformation_emptyCode_Test() {
         // test empty code exception
-        Throwable missingCodeException = assertThrows(InvalidParameterException.class, () -> esiService.getOauthInformation(""));
+        Throwable missingCodeException = assertThrows(IllegalArgumentException.class, () -> esiService.getOauthInformation(""));
         assertEquals(missingCodeException.getMessage(), "code cannot be empty");
     }
 
