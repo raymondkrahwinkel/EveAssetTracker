@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 @EnableScheduling
 public class SpringConfiguration {
 
+    // todo: add background task to cleanup expired sessions
     // region Schedules
 //    @Scheduled(fixedDelay = 1000)
 //    public void scheduleFixedDelay() {

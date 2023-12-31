@@ -8,6 +8,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Set;
 
 @Entity
 @Table(name = CharacterDto.TABLE_NAME)
@@ -32,4 +33,7 @@ public class CharacterDto {
 
     @UpdateTimestamp
     private Date updatedAt;
+
+    @OneToMany(mappedBy = "character")
+    private Set<SessionDto> sessions;
 }

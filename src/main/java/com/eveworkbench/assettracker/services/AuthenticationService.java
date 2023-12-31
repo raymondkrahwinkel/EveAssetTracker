@@ -5,8 +5,10 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.eveworkbench.assettracker.SecurityConstants;
 import com.eveworkbench.assettracker.models.database.CharacterDto;
+import com.eveworkbench.assettracker.models.database.SessionDto;
 import com.eveworkbench.assettracker.models.esi.OAuthResponse;
 import com.eveworkbench.assettracker.repositories.CharacterRepository;
+import com.eveworkbench.assettracker.repositories.SessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import java.security.InvalidParameterException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,6 +26,9 @@ import java.util.regex.Pattern;
 public class AuthenticationService {
     @Autowired
     private CharacterRepository characterRepository;
+
+    @Autowired
+    private SessionRepository sessionRepository;
 
     @Autowired
     private EsiService esiService;
@@ -101,11 +107,23 @@ public class AuthenticationService {
 
     // create JWT token for the character dto
     public String createToken(CharacterDto character) {
+        return createToken(character, null);
+    }
+    public String createToken(CharacterDto character, SessionDto session) {
+        if(session == null) {
+            session = new SessionDto();
+            session.setCharacter(character);
+            session.setToken(UUID.randomUUID().toString());
+        }
+
+        session.setExpiresAt(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME)); // set timeout to 2 hours
+        sessionRepository.save(session);
+
         return JWT.create()
                 .withSubject(character.getId().toString())
                 .withClaim("id", character.getId())
                 .withClaim("name", character.getName())
-                .withClaim("access_token", character.getAccessToken())
+                .withClaim("token", session.getToken())
                 .withExpiresAt(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
                 .sign(Algorithm.HMAC512(SecurityConstants.SECRET.getBytes()));
     }

@@ -1,17 +1,22 @@
 package com.eveworkbench.assettracker.controllers;
 
+import com.eveworkbench.assettracker.models.database.CharacterDto;
+import com.eveworkbench.assettracker.models.database.SessionDto;
+import com.eveworkbench.assettracker.repositories.CharacterRepository;
+import com.eveworkbench.assettracker.repositories.SessionRepository;
 import com.eveworkbench.assettracker.services.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -22,6 +27,12 @@ public class AuthenticationController {
 
     @Autowired
     private AuthenticationService authenticationService;
+
+    @Autowired
+    private CharacterRepository characterRepository;
+
+    @Autowired
+    private SessionRepository sessionRepository;
 
     @GetMapping("/auth/login/url")
     public String getLoginUrl() throws URISyntaxException {
@@ -42,5 +53,35 @@ public class AuthenticationController {
         {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @PostMapping("/auth/ping")
+    public ResponseEntity<String> ping() {
+        // get the current logged in user information
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        Integer characterId = Integer.parseInt(auth.getPrincipal().toString());
+        String token = auth.getCredentials().toString();
+
+        // get the session information
+        Optional<SessionDto> session = sessionRepository.findByCharacterIdAndToken(characterId, token);
+        if(session.isEmpty()) {
+            return ResponseEntity.ok("");
+        }
+
+        // get the character information
+        Optional<CharacterDto> characterDto = characterRepository.findById(characterId);
+        if(characterDto.isEmpty()) {
+            return ResponseEntity.ok("");
+        }
+
+        // check if we need to update the character access token
+        // todo: add check and update trigger when less then 5 minutes valid
+
+        // update the session expire timer
+        // todo: only update if the token is 5 minutes or less valid
+        String jwtToken = authenticationService.createToken(characterDto.get(), session.get());
+
+        return ResponseEntity.ok(jwtToken);
     }
 }
