@@ -28,7 +28,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc'
     runtimeOnly 'org.postgresql:postgresql'
-    // runtimeOnly 'com.h2database:h2'
+
+    testRuntimeOnly 'com.h2database:h2'
 
     testCompileOnly 'org.projectlombok:lombok:1.18.30'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'

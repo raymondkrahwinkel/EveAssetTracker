@@ -109,7 +109,12 @@ public class AuthenticationService {
     public String createToken(CharacterDto character) {
         return createToken(character, null);
     }
+
     public String createToken(CharacterDto character, SessionDto session) {
+        if(character == null) {
+            throw new NullPointerException("Character cannot be null");
+        }
+
         if(session == null) {
             session = new SessionDto();
             session.setCharacter(character);
