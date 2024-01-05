@@ -1,24 +1,37 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import {HttpClient} from "@angular/common/http";
+import {environment} from "../../environments/environment";
 import {ActivatedRoute, Router} from "@angular/router";
-import {HttpClient, HttpErrorResponse} from "@angular/common/http";
-import { DeviceDetectorService } from 'ngx-device-detector';
-import { environment } from './../../environments/environment';
+import {DeviceDetectorService} from "ngx-device-detector";
 
 @Component({
-  selector: 'app-authentication',
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css',
   standalone: true,
-  imports: [CommonModule],
-  templateUrl: './authentication.component.html',
-  styleUrl: './authentication.component.css'
+  imports: [ CommonModule ]
 })
-export class AuthenticationComponent {
+export class LoginComponent {
+  loginUrl = '';
+  hasUrl : boolean = (this.loginUrl.length > 0);
+
+  // todo: add loading indicator when url is being loaded from the backend
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private http: HttpClient,
     private deviceDetector: DeviceDetectorService
-  ) {}
+  ) {
+    const self = this;
+    console.log(environment.production, environment.apiUrl);
+    http.get(environment.apiUrl + '/auth/login/url', { responseType: 'text' }).subscribe(data => {
+      console.log(data);
+      self.loginUrl = data;
+      self.hasUrl = true;
+    });
+  }
 
   ngOnInit() {
     const code = this.route.snapshot.queryParamMap.get('code');
@@ -32,13 +45,13 @@ export class AuthenticationComponent {
       console.log(environment.production, environment.apiUrl);
       this.http.get(environment.apiUrl + '/auth/validate?code=' + code + '&state=' + state + '&browser=' + deviceInfo.browser + '&deviceType=' + deviceInfo.deviceType + '&os=' + deviceInfo.os_version, { responseType: 'text' }).subscribe({
         next: (data) => {
-        // Success
-        localStorage.setItem("token", data);
+          // Success
+          localStorage.setItem("token", data);
 
-        console.log('authentication call', data);
+          console.log('authentication call', data);
 
-        // loggedin, redirect
-        self.router.navigate([ '/' ]);
+          // loggedin, redirect
+          self.router.navigate([ '/' ]);
         },
         error: (error) => {
           // Failed
@@ -48,7 +61,7 @@ export class AuthenticationComponent {
     }
     else {
       // todo: navigate to /
-      alert('NOPE!');
+      // alert('NOPE!');
     }
 
     console.log(code, state);

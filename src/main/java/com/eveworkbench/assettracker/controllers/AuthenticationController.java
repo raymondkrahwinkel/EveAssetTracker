@@ -7,6 +7,7 @@ import com.eveworkbench.assettracker.repositories.SessionRepository;
 import com.eveworkbench.assettracker.services.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -66,13 +67,13 @@ public class AuthenticationController {
         // get the session information
         Optional<SessionDto> session = sessionRepository.findByCharacterIdAndToken(characterId, token);
         if(session.isEmpty()) {
-            return ResponseEntity.ok("");
+            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body("");
         }
 
         // get the character information
         Optional<CharacterDto> characterDto = characterRepository.findById(characterId);
         if(characterDto.isEmpty()) {
-            return ResponseEntity.ok("");
+            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body("");
         }
 
         // check if we need to update the character access token
@@ -82,6 +83,6 @@ public class AuthenticationController {
         // todo: only update if the token is 5 minutes or less valid
         String jwtToken = authenticationService.createToken(characterDto.get(), session.get());
 
-        return ResponseEntity.ok(jwtToken);
+        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(jwtToken);
     }
 }
