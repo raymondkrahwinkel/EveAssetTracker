@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Full run" type="CompoundRunConfigurationType">
+    <toRun name="Angular CLI Server (frontend)" type="js.build_tools.npm" />
+    <toRun name="AssetTrackerApplication" type="SpringBootApplicationConfigurationType" />
+    <method v="2" />
+  </configuration>
+</component>
