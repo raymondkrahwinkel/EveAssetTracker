@@ -4,6 +4,7 @@ import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {ActivatedRoute, Router} from "@angular/router";
 import {DeviceDetectorService} from "ngx-device-detector";
+import {BackendService} from "../services/backend.service";
 
 @Component({
   selector: 'app-login',
@@ -20,16 +21,17 @@ export class LoginComponent {
 
   constructor(
     private route: ActivatedRoute,
+    private backend: BackendService,
     private router: Router,
     private http: HttpClient,
     private deviceDetector: DeviceDetectorService
   ) {
     const self = this;
-    console.log(environment.production, environment.apiUrl);
-    http.get(environment.apiUrl + '/auth/login/url', { responseType: 'text' }).subscribe(data => {
-      console.log(data);
-      self.loginUrl = data;
-      self.hasUrl = true;
+    backend.getLoginUrl().then((url) => {
+      if(url != null) {
+        self.loginUrl = url;
+        self.hasUrl = true;
+      }
     });
   }
 
@@ -38,6 +40,8 @@ export class LoginComponent {
     const state = this.route.snapshot.queryParamMap.get('state');
 
     if(code != null && state != null) {
+      console.log(code, state);
+
       // validate the code via the API
       const self = this;
 
@@ -47,8 +51,7 @@ export class LoginComponent {
         next: (data) => {
           // Success
           localStorage.setItem("token", data);
-
-          console.log('authentication call', data);
+          // console.log('authentication call', data);
 
           // loggedin, redirect
           self.router.navigate([ '/' ]);
@@ -63,7 +66,5 @@ export class LoginComponent {
       // todo: navigate to /
       // alert('NOPE!');
     }
-
-    console.log(code, state);
   }
 }

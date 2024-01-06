@@ -2,6 +2,10 @@
 logging.level.org.springframework.data=debug
 logging.level.=error
 
+#security
+#cors origin for angular frontend
+app.cors.origin=http://localhost:4200
+
 #database
 spring.datasource.url=jdbc:sqlserver://localhost;encrypt=true;trustServerCertificate=true;databaseName=Eveworkbench-AssetTracker-Dev
 spring.datasource.username=sa

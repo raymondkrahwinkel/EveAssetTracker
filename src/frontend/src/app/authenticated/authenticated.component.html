@@ -1,2 +1,23 @@
-<p>Authenticated view</p>
-<router-outlet></router-outlet>
+<header class="bg-black mt-auto">
+  Header!
+</header>
+
+<div class="w-full flex flex-col sm:flex-row flex-wrap sm:flex-nowrap py-4 flex-grow">
+  <!-- left sidebar -->
+  <div class="w-fixed w-full flex-shrink flex-grow-0 px-4">
+    <div class="sticky top-0 p-4 w-full h-full">
+      <a [routerLink]="['/logout']">Logout</a>
+    </div>
+  </div>
+
+  <!-- main content -->
+  <main role="main" class="w-full flex-grow pt-1 px-3">
+    <router-outlet></router-outlet>
+  </main>
+</div>
+
+<footer class="bg-black mt-auto">
+  Footer!
+</footer>
+
+
