@@ -109,4 +109,57 @@ public class EsiServiceTests {
         assertEquals(response.get().refresh_token, "token", () -> "Refresh token value");
     }
     // endregion
+
+    // region refreshToken
+    @Test
+    void refreshToken_emptyCode_Test() {
+        Throwable missingCodeException = assertThrows(IllegalArgumentException.class, () -> esiService.refreshToken(""));
+        assertEquals(missingCodeException.getMessage(), "refreshToken cannot be empty");
+    }
+
+    @Test
+    void refreshToken_error_statusCodes_Test() throws URISyntaxException {
+        when(httpResponse.statusCode()).thenReturn(401);
+        Optional<OAuthResponse> response = esiService.refreshToken("refreshToken");
+        assertTrue(response.isEmpty(), () -> "Test 404");
+
+        when(httpResponse.statusCode()).thenReturn(404);
+        response = esiService.refreshToken("code");
+        assertTrue(response.isEmpty(), () -> "Test 404");
+
+        when(httpResponse.statusCode()).thenReturn(500);
+        response = esiService.refreshToken("code");
+        assertTrue(response.isEmpty(), () -> "Test 500");
+
+        when(httpResponse.statusCode()).thenReturn(420); // esi error limit reached
+        response = esiService.refreshToken("code");
+        assertTrue(response.isEmpty(), () -> "Test 500");
+    }
+
+    @Test
+    void refreshToken_200_invalid_json_Test() throws URISyntaxException {
+        // test 200 response with invalid json data
+        when(httpResponse.statusCode()).thenReturn(200);
+        when(httpResponse.body()).thenReturn("");
+
+        Optional<OAuthResponse> response = esiService.refreshToken("code");
+        assertTrue(response.isEmpty());
+    }
+
+    @Test
+    void refreshToken_200_valid_json_Test() throws URISyntaxException {
+        // test 200 response with invalid json data
+        when(httpResponse.statusCode()).thenReturn(200);
+        when(httpResponse.body()).thenReturn("{ \"access_token\": \"test\", \"expires_in\": 60, \"token_type\": \"Bearer\", \"refresh_token\": \"token\" }");
+
+        Optional<OAuthResponse> response = esiService.refreshToken("code");
+        assertFalse(response.isEmpty());
+
+        // validate the json decoded values
+        assertEquals(response.get().access_token, "test", () -> "Access token value");
+        assertEquals(response.get().expires_in, 60, () -> "Expire value");
+        assertEquals(response.get().token_type, "Bearer", () -> "Token type value");
+        assertEquals(response.get().refresh_token, "token", () -> "Refresh token value");
+    }
+    // endregion
 }

@@ -3,6 +3,8 @@ package com.eveworkbench.assettracker.services;
 import com.eveworkbench.assettracker.factories.HttpClientFactory;
 import com.eveworkbench.assettracker.models.esi.OAuthResponse;
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.InvalidPropertyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +34,9 @@ public class EsiService {
 
     @Autowired
     private HttpClientFactory httpClientFactory;
+
+    private final Logger logger = LoggerFactory.getLogger(EsiService.class);
+
 
     // region authentication
     // get the oauth token information
@@ -75,7 +80,53 @@ public class EsiService {
             OAuthResponse oauthResponse = new Gson().fromJson(response.body(), OAuthResponse.class);
             return Optional.ofNullable(oauthResponse);
         } catch (IOException | InterruptedException | URISyntaxException e) {
-            // todo: log error
+            logger.error("Exception while getting oauth information from ESI", e);
+            return Optional.empty();
+        }
+    }
+
+    // refresh access token request
+    public Optional<OAuthResponse> refreshToken(String refreshToken) {
+        // check if the clientid and secret are set
+        if(clientId == null || clientId.isEmpty()) {
+            throw new InvalidPropertyException(EsiService.class, "clientId", "esi.clientId is not set in the application properties");
+        }
+        if(clientSecret == null || clientSecret.isEmpty()) {
+            throw new InvalidPropertyException(EsiService.class, "clientSecret", "esi.clientSecret is not set in the application properties");
+        }
+
+        // check if the refreshToken is not empty
+        if(refreshToken.isEmpty()) {
+            throw new IllegalArgumentException("refreshToken cannot be empty");
+        }
+
+        // setup the post form data
+        Map<String, String> formData = new HashMap<>();
+        formData.put("grant_type", "refresh_token");
+        formData.put("refresh_token", refreshToken);
+
+        try {
+            // create request for authentication
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI("https://login.eveonline.com/v2/oauth/token"))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(String.format("%s:%s", clientId, clientSecret).getBytes()))
+                    .POST(HttpRequest.BodyPublishers.ofString(getFormDataAsString(formData)))
+                    .build();
+
+            // execute the created authentication request
+            HttpResponse<String> response = httpClientFactory.create()
+                    .send(request, HttpResponse.BodyHandlers.ofString());
+
+            // check if the request was successful
+            if(response.statusCode() != 200) {
+                return Optional.empty();
+            }
+
+            OAuthResponse oauthResponse = new Gson().fromJson(response.body(), OAuthResponse.class);
+            return Optional.ofNullable(oauthResponse);
+        } catch (IOException | InterruptedException | URISyntaxException e) {
+            logger.error("Exception while refreshing token from ESI", e);
             return Optional.empty();
         }
     }

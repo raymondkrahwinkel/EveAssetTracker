@@ -23,7 +23,7 @@ export class BackendService {
         responseType: 'text'
       }).subscribe({
         next: (data) => {
-          console.debug(Date.now(), 'ping response', data);
+          console.debug((new Date).toLocaleString(), 'ping response', data);
           if (data == null || data.toString().length < 16) {
             reject(403); // send 403 back because received token is invalid
           } else {

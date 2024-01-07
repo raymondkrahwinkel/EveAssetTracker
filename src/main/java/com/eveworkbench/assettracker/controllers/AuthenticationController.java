@@ -86,7 +86,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/auth/ping")
-    public ResponseEntity<String> ping() {
+    public ResponseEntity<String> ping() { // todo: use json object instead of String response
         // get the current logged-in user information
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
@@ -107,7 +107,9 @@ public class AuthenticationController {
 
         // check if we need to update the character access token when it is less than 5 minutes valid
         if(characterDto.get().getTokenExpiresAt().before(Date.from(Instant.now().plus(Duration.ofMinutes(5))))) {
-            // todo: update character access and refresh token from the esi
+            if(!authenticationService.characterRefreshAccessToken(characterId)) {
+                return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body("");
+            }
         }
 
         String jwtToken = authenticationService.createToken(characterDto.get(), session.get());

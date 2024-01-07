@@ -9,6 +9,7 @@ import com.eveworkbench.assettracker.models.database.SessionDto;
 import com.eveworkbench.assettracker.models.esi.OAuthResponse;
 import com.eveworkbench.assettracker.repositories.CharacterRepository;
 import com.eveworkbench.assettracker.repositories.SessionRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -103,6 +104,40 @@ public class AuthenticationService {
 
             return dto;
         }
+    }
+
+    // refresh character ESI access token
+    public boolean characterRefreshAccessToken(Integer characterId) {
+        if(characterId == null) {
+            throw new IllegalArgumentException("Character id cannot be null");
+        }
+
+        // get the character information from the database
+        CharacterDto character = characterRepository.findById(characterId).orElseThrow(() -> new EntityNotFoundException("Character with id: " + characterId + " could not be found"));
+        if(character.getAccessToken() == null || character.getAccessToken().isEmpty() || character.getRefreshToken() == null || character.getRefreshToken().isEmpty()) {
+            throw new RuntimeException("Character access and/or refresh token is empty");
+        }
+
+        boolean updateResult = false;
+
+        // execute the ESI call to update the token
+        Optional<OAuthResponse> oAuthResponse = esiService.refreshToken(character.getRefreshToken());
+        if(oAuthResponse.isPresent()) {
+            // update the character
+            character.setAccessToken(oAuthResponse.get().access_token);
+            character.setRefreshToken(oAuthResponse.get().refresh_token);
+            character.setTokenExpiresAt(new Date(System.currentTimeMillis() + (oAuthResponse.get().expires_in * 1000)));
+            updateResult = true;
+        } else {
+            // remove the access and refresh token
+            character.setAccessToken(null);
+            character.setRefreshToken(null);
+            character.setTokenExpiresAt(null);
+        }
+
+        // save the changes
+        characterRepository.save(character);
+        return updateResult;
     }
 
     // create JWT token for the character dto
