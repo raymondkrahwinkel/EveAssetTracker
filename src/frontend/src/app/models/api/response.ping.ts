@@ -1,5 +1,5 @@
-import {ResponseBase} from "./response.base";
+import {ResponseBaseWithData} from "./response.base.data";
 
-export class ResponsePing extends ResponseBase {
-  token: string = "";
+export class ResponsePing extends ResponseBaseWithData<string> {
+
 }

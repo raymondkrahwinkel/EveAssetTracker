@@ -28,7 +28,7 @@ export class BackendService {
             console.error(data?.message ?? "");
             reject(403); // send 403 back because received token is invalid
           } else {
-            resolve(data.token);
+            resolve(data.data);
           }
         },
         error: (e) => {
