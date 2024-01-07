@@ -3,7 +3,6 @@ package com.eveworkbench.assettracker;
 import com.eveworkbench.assettracker.filters.JWTAuthorizationFilter;
 import com.eveworkbench.assettracker.repositories.CharacterRepository;
 import com.eveworkbench.assettracker.repositories.SessionRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +23,6 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SpringSecurityConfiguration {
     @Autowired
     private CharacterRepository characterRepository;

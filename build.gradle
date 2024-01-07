@@ -17,9 +17,6 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'org.projectlombok:lombok:1.18.30'
-    annotationProcessor 'org.projectlombok:lombok:1.18.30'
-
     implementation 'com.auth0:java-jwt:4.4.0'
     implementation 'com.google.code.gson:gson:2.10.1'
 
@@ -30,9 +27,6 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
 
     testRuntimeOnly 'com.h2database:h2'
-
-    testCompileOnly 'org.projectlombok:lombok:1.18.30'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

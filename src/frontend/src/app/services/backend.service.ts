@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {environment} from "../../environments/environment";
+import {ResponsePing} from "../models/api/response.ping";
 
 @Injectable({
   providedIn: 'root'
@@ -18,16 +19,16 @@ export class BackendService {
 
   public async ping(): Promise<any> {
     return new Promise<any>((resolve, reject) => {
-      this.http.post(environment.apiUrl + '/auth/ping', '', {
+      this.http.post<ResponsePing>(environment.apiUrl + '/auth/ping', '', {
         headers: this.getAuthHeaders(),
-        responseType: 'text'
       }).subscribe({
         next: (data) => {
           console.debug((new Date).toLocaleString(), 'ping response', data);
-          if (data == null || data.toString().length < 16) {
+          if (data == null || !data.success) {
+            console.error(data?.message ?? "");
             reject(403); // send 403 back because received token is invalid
           } else {
-            resolve(data);
+            resolve(data.token);
           }
         },
         error: (e) => {

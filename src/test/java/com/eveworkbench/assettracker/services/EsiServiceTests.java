@@ -2,7 +2,6 @@ package com.eveworkbench.assettracker.services;
 
 import com.eveworkbench.assettracker.factories.HttpClientFactory;
 import com.eveworkbench.assettracker.models.esi.OAuthResponse;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,11 +15,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.security.InvalidParameterException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,9 +43,8 @@ public class EsiServiceTests {
     @Mock
     private HttpResponse<String> httpResponse;
 
-    @SneakyThrows
     @BeforeEach
-    public void setup() {
+    public void setup() throws IOException, InterruptedException {
         MockitoAnnotations.openMocks(this);
 
         when(httpClientFactory.create()).thenReturn(httpClient);

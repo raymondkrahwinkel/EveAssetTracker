@@ -1,12 +1,12 @@
 package com.eveworkbench.assettracker.controllers;
 
+import com.eveworkbench.assettracker.models.api.response.ResponsePing;
 import com.eveworkbench.assettracker.models.database.CharacterDto;
 import com.eveworkbench.assettracker.models.database.SessionDto;
 import com.eveworkbench.assettracker.repositories.CharacterRepository;
 import com.eveworkbench.assettracker.repositories.SessionRepository;
 import com.eveworkbench.assettracker.services.AuthenticationService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -54,7 +54,7 @@ public class AuthenticationController {
     }
 
     @GetMapping("/auth/validate")
-    public ResponseEntity<?> getValidate(String code) throws Exception
+    public ResponseEntity<?> getValidate(String code)
     {
         try {
             String token = authenticationService.validateCharacter(code);
@@ -86,7 +86,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/auth/ping")
-    public ResponseEntity<String> ping() { // todo: use json object instead of String response
+    public ResponseEntity<ResponsePing> ping() {
         // get the current logged-in user information
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
@@ -96,23 +96,23 @@ public class AuthenticationController {
         // get the session information
         Optional<SessionDto> session = sessionRepository.findByCharacterIdAndToken(characterId, token);
         if(session.isEmpty()) {
-            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body("");
+            return ResponseEntity.ok(new ResponsePing("Failed to get session information", false));
         }
 
         // get the character information
         Optional<CharacterDto> characterDto = characterRepository.findById(characterId);
         if(characterDto.isEmpty()) {
-            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body("");
+            return ResponseEntity.ok(new ResponsePing("Failed to get character information", false));
         }
 
         // check if we need to update the character access token when it is less than 5 minutes valid
         if(characterDto.get().getTokenExpiresAt().before(Date.from(Instant.now().plus(Duration.ofMinutes(5))))) {
             if(!authenticationService.characterRefreshAccessToken(characterId)) {
-                return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body("");
+                return ResponseEntity.ok(new ResponsePing("Failed to refresh access token for character", false));
             }
         }
 
         String jwtToken = authenticationService.createToken(characterDto.get(), session.get());
-        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(jwtToken);
+        return ResponseEntity.ok(new ResponsePing("", true, jwtToken));
     }
 }
