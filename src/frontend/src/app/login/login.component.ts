@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {Component, Inject} from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {ActivatedRoute, Router} from "@angular/router";
 import {DeviceDetectorService} from "ngx-device-detector";
 import {BackendService} from "../services/backend.service";
+import {Title} from "@angular/platform-browser";
 
 @Component({
   selector: 'app-login',
@@ -24,8 +25,13 @@ export class LoginComponent {
     private backend: BackendService,
     private router: Router,
     private http: HttpClient,
-    private deviceDetector: DeviceDetectorService
+    private deviceDetector: DeviceDetectorService,
+    private titleService: Title,
+    @Inject(DOCUMENT) private document: Document
   ) {
+    this.titleService.setTitle("Login to eve online");
+    this.document.body.classList.add('text-center')
+
     const self = this;
     backend.getLoginUrl().then((url) => {
       if(url != null) {

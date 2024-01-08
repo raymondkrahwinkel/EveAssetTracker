@@ -1,5 +1,6 @@
 package com.eveworkbench.assettracker.models.database;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -16,7 +17,8 @@ public class SessionDto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @JsonBackReference // break a reference loop
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "characterId", nullable = false)
     private CharacterDto character;
 

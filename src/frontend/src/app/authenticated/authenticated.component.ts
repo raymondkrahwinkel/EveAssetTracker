@@ -5,6 +5,8 @@ import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {AuthService} from "../auth/auth.service";
 import {BackendService} from "../services/backend.service";
+import {TokenInformation} from "../models/tokenInformation";
+import {Character} from "../models/character";
 
 @Component({
   selector: 'app-dashboard',
@@ -14,9 +16,12 @@ import {BackendService} from "../services/backend.service";
   styleUrl: './authenticated.component.css'
 })
 export class AuthenticatedComponent {
-  constructor(private backend: BackendService, private router: Router, private authService: AuthService) {}
+  protected authenticatedInformation: TokenInformation|null = null;
+  protected character: Character|null = null;
 
-  ngAfterViewInit() {
+  constructor(private backend: BackendService, private router: Router, protected authService: AuthService) {}
+
+  ngOnInit() {
     if(this.router.url.substring(1, 7) == 'logout') {
       let token = localStorage.getItem("token");
       if(this.authService.isAuthenticated() && token != null && token.length > 1) {
@@ -32,6 +37,16 @@ export class AuthenticatedComponent {
       return;
     }
 
+    this.authenticatedInformation = this.authService.getAuthenticatedInformation();
+    if(this.authenticatedInformation) {
+      this.backend.getCharacter(this.authenticatedInformation.id).then((character) => {
+        this.character = character;
+        console.log("character data", character)
+      });
+    }
+  }
+
+  ngAfterViewInit() {
     this.ping();
   }
 

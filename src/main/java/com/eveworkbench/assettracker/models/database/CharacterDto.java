@@ -1,5 +1,6 @@
 package com.eveworkbench.assettracker.models.database;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -16,6 +17,13 @@ public class CharacterDto {
     @Column(name = "id", nullable = false)
 //    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+    @JsonBackReference // break a reference loop
+    @ManyToOne(fetch = FetchType.LAZY)
+    private CharacterDto parent;
+
+    @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+    private Set<CharacterDto> children;
 
     private String name;
     private Date tokenExpiresAt;
@@ -94,5 +102,21 @@ public class CharacterDto {
 
     public void setSessions(Set<SessionDto> sessions) {
         this.sessions = sessions;
+    }
+
+    public Set<CharacterDto> getChildren() {
+        return children;
+    }
+
+    public void setChildren(Set<CharacterDto> children) {
+        this.children = children;
+    }
+
+    public CharacterDto getParent() {
+        return parent;
+    }
+
+    public void setParent(CharacterDto parent) {
+        this.parent = parent;
     }
 }

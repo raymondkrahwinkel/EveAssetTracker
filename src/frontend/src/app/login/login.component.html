@@ -1,9 +1,12 @@
-<main class="main">
-  <div class="content">
-    <p>This is the login page!</p>
-    <p *ngIf="!hasUrl">Please wait, loading url...</p>
-    <a href="{{this.loginUrl}}" *ngIf="hasUrl">
-      <img src="https://web.ccpgamescdn.com/eveonlineassets/developers/eve-sso-login-black-large.png" title="Login with EVE Online" alt="Login with EVE Online" />
-    </a>
+<main>
+  <div class="d-flex flex-column min-vh-100 min-vw-100">
+    <div class="d-flex flex-grow-1 justify-content-center align-items-center">
+      <div>
+        <p *ngIf="!hasUrl">Please wait, loading url...</p>
+        <a href="{{this.loginUrl}}" *ngIf="hasUrl">
+          <img src="https://web.ccpgamescdn.com/eveonlineassets/developers/eve-sso-login-black-large.png" title="Login with EVE Online" alt="Login with EVE Online" />
+        </a>
+      </div>
+    </div>
   </div>
 </main>

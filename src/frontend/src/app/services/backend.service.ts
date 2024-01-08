@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {ResponsePing} from "../models/api/response.ping";
+import {ResponseBaseWithData} from "../models/api/response.base.data";
+import {Character} from "../models/character";
 
 @Injectable({
   providedIn: 'root'
@@ -55,6 +57,31 @@ export class BackendService {
       }).subscribe({
         next: value => {
           resolve((/true/).test(value));
+        }
+      });
+    });
+  }
+
+  public async getCharacter(id: number): Promise<Character> {
+    return new Promise<Character>((resolve, reject) => {
+      this.http.get<ResponseBaseWithData<Character>>(environment.apiUrl + '/character/' + id, {
+        headers: this.getAuthHeaders(),
+      }).subscribe({
+        next: (data) => {
+          console.debug((new Date).toLocaleString(), 'character.get response', data);
+          if (data == null || !data.success) {
+            console.error(data?.message ?? "");
+            reject(403); // send 403 back because received token is invalid
+          } else {
+            resolve(data.data);
+          }
+        },
+        error: (e) => {
+          if (e.status == 403) {
+            reject(403);
+          } else {
+            reject(e);
+          }
         }
       });
     });

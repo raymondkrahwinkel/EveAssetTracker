@@ -32,12 +32,10 @@ public class AuthenticationController {
     private String clientId;
 
     private final AuthenticationService authenticationService;
-    private final CharacterRepository characterRepository;
     private final SessionRepository sessionRepository;
 
-    public AuthenticationController(AuthenticationService authenticationService, CharacterRepository characterRepository, SessionRepository sessionRepository) {
+    public AuthenticationController(AuthenticationService authenticationService, SessionRepository sessionRepository) {
         this.authenticationService = authenticationService;
-        this.characterRepository = characterRepository;
         this.sessionRepository = sessionRepository;
     }
 
@@ -100,19 +98,18 @@ public class AuthenticationController {
         }
 
         // get the character information
-        Optional<CharacterDto> characterDto = characterRepository.findById(characterId);
-        if(characterDto.isEmpty()) {
+        if(!session.get().getCharacter().getId().equals(characterId)) {
             return ResponseEntity.ok(new ResponsePing("Failed to get character information", false));
         }
 
         // check if we need to update the character access token when it is less than 5 minutes valid
-        if(characterDto.get().getTokenExpiresAt().before(Date.from(Instant.now().plus(Duration.ofMinutes(5))))) {
+        if(session.get().getCharacter().getTokenExpiresAt().before(Date.from(Instant.now().plus(Duration.ofMinutes(5))))) {
             if(!authenticationService.characterRefreshAccessToken(characterId)) {
                 return ResponseEntity.ok(new ResponsePing("Failed to refresh access token for character", false));
             }
         }
 
-        String jwtToken = authenticationService.createToken(characterDto.get(), session.get());
+        String jwtToken = authenticationService.createToken(session.get().getCharacter(), session.get());
         return ResponseEntity.ok(new ResponsePing("", true, jwtToken));
     }
 }
