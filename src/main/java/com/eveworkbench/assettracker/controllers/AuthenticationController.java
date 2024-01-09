@@ -1,6 +1,8 @@
 package com.eveworkbench.assettracker.controllers;
 
+import com.eveworkbench.assettracker.models.api.response.ResponseBaseWithData;
 import com.eveworkbench.assettracker.models.api.response.ResponsePing;
+import com.eveworkbench.assettracker.models.api.response.ResponseValidate;
 import com.eveworkbench.assettracker.models.database.CharacterDto;
 import com.eveworkbench.assettracker.models.database.SessionDto;
 import com.eveworkbench.assettracker.repositories.CharacterRepository;
@@ -10,10 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -40,27 +39,39 @@ public class AuthenticationController {
     }
 
     @GetMapping("/auth/login/url")
-    public String getLoginUrl() throws URISyntaxException {
+    public String getLoginUrl(@RequestParam Optional<UUID> state) throws URISyntaxException {
         if(clientId == null) {
             throw new RuntimeException("Missing esi client id");
         }
 
         String callbackUrl = "http://localhost:4200/auth/callback";
-        String url = String.format("https://login.eveonline.com/v2/oauth/authorize/?response_type=code&redirect_uri=%s&client_id=%s&state=%s", URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8), clientId, UUID.randomUUID());
+        String url = String.format("https://login.eveonline.com/v2/oauth/authorize/?response_type=code&redirect_uri=%s&client_id=%s&state=%s", URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8), clientId, state.orElseGet(UUID::randomUUID));
         URI uri = new URI(url);
         return uri.toString();
     }
 
-    @GetMapping("/auth/validate")
-    public ResponseEntity<?> getValidate(String code)
+    @GetMapping("/auth/validate") // todo: change to response message with indication if is child character addition
+    public ResponseEntity<ResponseValidate> getValidate(String code, String state)
     {
         try {
-            String token = authenticationService.validateCharacter(code);
-            return ResponseEntity.ok(token);
+            Optional<SessionDto> session = sessionRepository.findByToken(state);
+            Optional<CharacterDto> parentCharacter = Optional.empty();
+            if(session.isPresent()) {
+                parentCharacter = Optional.of(session.get().getCharacter());
+            }
+
+            String token = authenticationService.validateCharacter(code, parentCharacter);
+            var response = new ResponseValidate("", true, token);
+            if(parentCharacter.isPresent() && token == null) {
+                // we need no new token, only the data update
+                response.setChildCharacterValidation(true);
+            }
+
+            return ResponseEntity.ok(response);
         }
         catch(RuntimeException e)
         {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ResponseValidate(e.getMessage(), false, null));
         }
     }
 

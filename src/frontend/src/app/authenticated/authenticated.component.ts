@@ -18,10 +18,17 @@ import {Character} from "../models/character";
 export class AuthenticatedComponent {
   protected authenticatedInformation: TokenInformation|null = null;
   protected character: Character|null = null;
+  protected characterAddUrl: string|null = null;
 
   constructor(private backend: BackendService, private router: Router, protected authService: AuthService) {}
 
   ngOnInit() {
+    if(!this.authService.isAuthenticated()) {
+      alert('logout now!');
+      this.router.navigate(['auth/login']);
+      return;
+    }
+
     if(this.router.url.substring(1, 7) == 'logout') {
       let token = localStorage.getItem("token");
       if(this.authService.isAuthenticated() && token != null && token.length > 1) {
@@ -37,11 +44,17 @@ export class AuthenticatedComponent {
       return;
     }
 
+    // get the authenticated information
     this.authenticatedInformation = this.authService.getAuthenticatedInformation();
     if(this.authenticatedInformation) {
       this.backend.getCharacter(this.authenticatedInformation.id).then((character) => {
         this.character = character;
         console.log("character data", character)
+      });
+
+      // get the character login url
+      this.backend.getLoginUrl(this.authenticatedInformation.token).then((data) => {
+        this.characterAddUrl = data;
       });
     }
   }
@@ -53,7 +66,7 @@ export class AuthenticatedComponent {
   async ping() {
     while(true) {
       let token = localStorage.getItem("token");
-      if(this.authService.isAuthenticated() && token != null && token.length > 1) {
+      if(this.authService.isAuthenticated()) {
         this.backend.ping().then(
           (data) => {
             localStorage.setItem("token", data.toString());

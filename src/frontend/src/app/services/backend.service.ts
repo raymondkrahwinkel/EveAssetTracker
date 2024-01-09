@@ -12,9 +12,9 @@ export class BackendService {
 
   constructor(private http: HttpClient) { }
 
-  public async getLoginUrl(): Promise<any> {
+  public async getLoginUrl(state: string|null): Promise<any> {
     return new Promise<any>(resolve => {
-      this.http.get(environment.apiUrl + '/auth/login/url', { responseType: 'text' })
+      this.http.get(environment.apiUrl + '/auth/login/url' + (state != null ? '?state=' + state : ''), { responseType: 'text' })
         .subscribe(data => resolve(data));
     });
   }

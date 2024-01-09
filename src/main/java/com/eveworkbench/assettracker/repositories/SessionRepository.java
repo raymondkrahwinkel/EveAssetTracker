@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface SessionRepository extends CrudRepository<SessionDto, Long> {
     Optional<SessionDto> findByCharacterIdAndToken(Integer characterId, String token);
+    Optional<SessionDto> findByToken(String token);
 }

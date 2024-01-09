@@ -17,15 +17,18 @@
         <li class="nav-item dropdown">
           <a href="#" class="nav-link dropdown-toggle" id="optionsDropdown" role="button" data-bs-toggle="dropdown"
              aria-haspopup="true" aria-expanded="false">
+            <span class="me-3">1.000.000 isk</span>
             <span class="me-3">{{character?.name}}</span>
-            <img
-              src="{{ 'https://images.evetech.net/characters/' + authenticatedInformation?.id + '/portrait/?size=32'}}"
-              alt="{{authenticatedInformation?.name}}" class="rounded-circle border-1-white"/>
+            <img src="{{ 'https://images.evetech.net/characters/' + authenticatedInformation?.id + '/portrait/?size=32'}}" alt="{{authenticatedInformation?.name}}" class="rounded-circle border-1-white"/>
           </a>
           <ul class="dropdown-menu fade-down shadow dropdown-menu-end" aria-labelledby="optionsDropdown">
-            <li>List with characters here</li>
+            <li *ngFor="let child of character?.children" class="px-2 py-1">
+              <img src="{{ 'https://images.evetech.net/characters/' + child?.id + '/portrait/?size=32'}}" alt="{{child?.name}}" class="rounded-circle border-1-white"/>
+              {{child.name}}
+            </li>
+            <li><a class="dropdown-item" href="{{characterAddUrl}}"><i class="ri-add-circle-line me-2"></i>Add character</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="nav-link text-danger" [routerLink]="['/logout']"><i class="ri-logout-box-r-line"></i>Logout</a></li>
+            <li><a class="dropdown-item text-danger" [routerLink]="['/logout']"><i class="ri-logout-box-r-line me-2"></i>Logout</a></li>
           </ul>
         </li>
       </ul>

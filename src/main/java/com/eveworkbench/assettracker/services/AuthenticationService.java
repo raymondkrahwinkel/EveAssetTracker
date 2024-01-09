@@ -35,7 +35,8 @@ public class AuthenticationService {
     private EsiService esiService;
 
     // validate the oauth code and return a new JWT token
-    public String validateCharacter(String code) throws RuntimeException {
+    // returns: null when it is a child character
+    public String validateCharacter(String code, Optional<CharacterDto> parentCharacter) throws RuntimeException {
         // execute the oauth validation via the ESI
         Optional<OAuthResponse> oAuthResponse;
         try {
@@ -48,12 +49,17 @@ public class AuthenticationService {
             throw new RuntimeException("Failed to get authentication information from the ESI for code: " + code);
         }
 
-        CharacterDto character = getCharacterFromOAuthResponse(oAuthResponse.get());
+        CharacterDto character = getCharacterFromOAuthResponse(oAuthResponse.get(), parentCharacter);
+        if(parentCharacter.isPresent()) {
+            // we need no new token, only the data update
+            return null;
+        }
+
         return createToken(character);
     }
 
     // get the character dto from the oauth response
-    private CharacterDto getCharacterFromOAuthResponse(OAuthResponse oAuthResponse)
+    private CharacterDto getCharacterFromOAuthResponse(OAuthResponse oAuthResponse, Optional<CharacterDto> parentCharacter)
     {
         if(oAuthResponse == null) {
             throw new IllegalArgumentException("OAuthResponse cannot be empty");
@@ -100,6 +106,11 @@ public class AuthenticationService {
             dto.setAccessToken(oAuthResponse.access_token);
             dto.setRefreshToken(oAuthResponse.refresh_token);
             dto.setTokenExpiresAt(new Date(System.currentTimeMillis() + (oAuthResponse.expires_in * 1000)));
+
+            if(parentCharacter.isPresent() && !parentCharacter.get().getId().equals(dto.getId())) {
+                parentCharacter.ifPresent(dto::setParent);
+            }
+
             characterRepository.save(dto);
 
             return dto;
