@@ -12,3 +12,4 @@ docker run -d --name test -p 8080:8080 -v [localPath]:/app/application.propertie
 <h3>Todo:</h3>
 - frontend - move http calls to service
 - backend - create token refresh ESI call
+- frontend - add reauthentication popup for main character and children

@@ -1,12 +1,11 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterOutlet} from "@angular/router";
-import {HttpClient, HttpHeaders} from "@angular/common/http";
-import {environment} from "../../environments/environment";
 import {AuthService} from "../auth/auth.service";
 import {BackendService} from "../services/backend.service";
 import {TokenInformation} from "../models/tokenInformation";
 import {Character} from "../models/character";
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,7 +17,7 @@ import {Character} from "../models/character";
 export class AuthenticatedComponent {
   protected authenticatedInformation: TokenInformation|null = null;
   protected character: Character|null = null;
-  protected characterAddUrl: string|null = null;
+  private sessionKeepAlive: boolean = true;
 
   constructor(private backend: BackendService, private router: Router, protected authService: AuthService) {}
 
@@ -30,6 +29,8 @@ export class AuthenticatedComponent {
     }
 
     if(this.router.url.substring(1, 7) == 'logout') {
+      this.sessionKeepAlive = false;
+
       let token = localStorage.getItem("token");
       if(this.authService.isAuthenticated() && token != null && token.length > 1) {
         this.backend.logout()
@@ -51,11 +52,6 @@ export class AuthenticatedComponent {
         this.character = character;
         console.log("character data", character)
       });
-
-      // get the character login url
-      this.backend.getLoginUrl(this.authenticatedInformation.token).then((data) => {
-        this.characterAddUrl = data;
-      });
     }
   }
 
@@ -64,19 +60,55 @@ export class AuthenticatedComponent {
   }
 
   async ping() {
-    while(true) {
-      let token = localStorage.getItem("token");
+    while(this.sessionKeepAlive) {
       if(this.authService.isAuthenticated()) {
         this.backend.ping().then(
           (data) => {
             localStorage.setItem("token", data.toString());
           },
           (reason) => {
-            if(reason == 403) {
-              localStorage.removeItem("token");
+            if(!this.sessionKeepAlive) {
+              return;
+            }
 
-              // redirect to login page
-              this.router.navigate(['auth/login']);
+            if(reason == 403) {
+              Swal.fire({
+                title: 'Authentication expired',
+                showDenyButton: true,
+                showCancelButton: false,
+                confirmButtonText: 'Reauthenticate',
+                denyButtonText: 'Logout',
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  if(this.authenticatedInformation == null) {
+                    // try to get the data
+                    this.authenticatedInformation = this.authService.getAuthenticatedInformation();
+
+                    // when we have still no data, stop here
+                    if(this.authenticatedInformation == null) {
+                      Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'No session information available'
+                      });
+
+                      return;
+                    }
+                  }
+
+                  // get the unique login url
+                  this.backend.getLoginUrl(this.authenticatedInformation.token, false, true).then((url) => {
+                    window.location.href = url;
+                  });
+                } else if (result.isDenied) {
+                  localStorage.removeItem("token");
+
+                  // redirect to login page
+                  this.router.navigate(['auth/login']);
+                }
+              })
+
+              // localStorage.removeItem("token");
             } else {
               console.error(reason);
             }
@@ -90,6 +122,22 @@ export class AuthenticatedComponent {
 
       await this.sleep((30 * 1000));
     }
+  }
+
+  onAddCharacterClick() : void {
+    if(this.authenticatedInformation == null) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'No session information available'
+      });
+      return;
+    }
+
+    // get the character login url
+    this.backend.getLoginUrl(this.authenticatedInformation.token, true, false).then((data) => {
+      window.location.href = data;
+    });
   }
 
   sleep(ms : number) {

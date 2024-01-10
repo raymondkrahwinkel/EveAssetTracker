@@ -4,8 +4,10 @@ import com.eveworkbench.assettracker.models.api.response.ResponseBaseWithData;
 import com.eveworkbench.assettracker.models.api.response.ResponsePing;
 import com.eveworkbench.assettracker.models.api.response.ResponseValidate;
 import com.eveworkbench.assettracker.models.database.CharacterDto;
+import com.eveworkbench.assettracker.models.database.LoginStateDto;
 import com.eveworkbench.assettracker.models.database.SessionDto;
 import com.eveworkbench.assettracker.repositories.CharacterRepository;
+import com.eveworkbench.assettracker.repositories.LoginStateRepository;
 import com.eveworkbench.assettracker.repositories.SessionRepository;
 import com.eveworkbench.assettracker.services.AuthenticationService;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,37 +34,68 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
     private final SessionRepository sessionRepository;
+    private final LoginStateRepository loginStateRepository;
+    private final CharacterRepository characterRepository;
 
-    public AuthenticationController(AuthenticationService authenticationService, SessionRepository sessionRepository) {
+    public AuthenticationController(AuthenticationService authenticationService, SessionRepository sessionRepository, LoginStateRepository loginStateRepository,
+                                    CharacterRepository characterRepository) {
         this.authenticationService = authenticationService;
         this.sessionRepository = sessionRepository;
+        this.loginStateRepository = loginStateRepository;
+        this.characterRepository = characterRepository;
     }
 
     @GetMapping("/auth/login/url")
-    public String getLoginUrl(@RequestParam Optional<UUID> state) throws URISyntaxException {
+    public String getLoginUrl(@RequestParam UUID state, @RequestParam boolean ra, @RequestParam boolean ac, @RequestParam Optional<Integer> pc, @RequestParam Optional<UUID> session) throws URISyntaxException {
         if(clientId == null) {
             throw new RuntimeException("Missing esi client id");
         }
 
+        // register the login state
+        LoginStateDto loginState = new LoginStateDto(state);
+        loginState.setReAuthenticate(ra);
+        loginState.setAddCharacter(ac);
+        session.ifPresent(loginState::setSession);
+
+        if(pc.isPresent()) {
+            // get the character information
+            Optional<CharacterDto> parentCharacter = characterRepository.findById(pc.get());
+            if(parentCharacter.isEmpty()) {
+                throw new IllegalArgumentException("Failed to get parent character with id: " + pc.get());
+            }
+
+            loginState.setParentCharacter(parentCharacter.get());
+        }
+
+        loginStateRepository.save(loginState);
+
         String callbackUrl = "http://localhost:4200/auth/callback";
-        String url = String.format("https://login.eveonline.com/v2/oauth/authorize/?response_type=code&redirect_uri=%s&client_id=%s&state=%s", URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8), clientId, state.orElseGet(UUID::randomUUID));
+        String url = String.format("https://login.eveonline.com/v2/oauth/authorize/?response_type=code&redirect_uri=%s&client_id=%s&state=%s", URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8), clientId, state);
         URI uri = new URI(url);
         return uri.toString();
     }
 
-    @GetMapping("/auth/validate") // todo: change to response message with indication if is child character addition
-    public ResponseEntity<ResponseValidate> getValidate(String code, String state)
+    @GetMapping("/auth/validate")
+    public ResponseEntity<ResponseValidate> getValidate(String code, UUID state)
     {
+        Optional<CharacterDto> parentCharacter = Optional.empty();
+        Optional<LoginStateDto> loginState = loginStateRepository.findByState(state);
+        if(loginState.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ResponseValidate("Login state is missing", false, null));
+        }
+
         try {
-            Optional<SessionDto> session = sessionRepository.findByToken(state);
-            Optional<CharacterDto> parentCharacter = Optional.empty();
-            if(session.isPresent()) {
-                parentCharacter = Optional.of(session.get().getCharacter());
+            if(loginState.get().isAddCharacter()) {
+                if(loginState.get().getParentCharacter() == null) {
+                    return ResponseEntity.badRequest().body(new ResponseValidate("Cannot add new character without parent defined", false, null));
+                }
+
+                parentCharacter = Optional.ofNullable(loginState.get().getParentCharacter());
             }
 
-            String token = authenticationService.validateCharacter(code, parentCharacter);
+            String token = authenticationService.validateCharacter(code, parentCharacter, !loginState.get().isAddCharacter());
             var response = new ResponseValidate("", true, token);
-            if(parentCharacter.isPresent() && token == null) {
+            if(loginState.get().isAddCharacter() && parentCharacter.isPresent() && token == null) {
                 // we need no new token, only the data update
                 response.setChildCharacterValidation(true);
             }
@@ -72,6 +105,10 @@ public class AuthenticationController {
         catch(RuntimeException e)
         {
             return ResponseEntity.badRequest().body(new ResponseValidate(e.getMessage(), false, null));
+        }
+        finally
+        {
+            loginStateRepository.delete(loginState.get());
         }
     }
 

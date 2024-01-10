@@ -36,7 +36,7 @@ public class AuthenticationService {
 
     // validate the oauth code and return a new JWT token
     // returns: null when it is a child character
-    public String validateCharacter(String code, Optional<CharacterDto> parentCharacter) throws RuntimeException {
+    public String validateCharacter(String code, Optional<CharacterDto> parentCharacter, boolean generateNewToken) throws RuntimeException {
         // execute the oauth validation via the ESI
         Optional<OAuthResponse> oAuthResponse;
         try {
@@ -50,7 +50,7 @@ public class AuthenticationService {
         }
 
         CharacterDto character = getCharacterFromOAuthResponse(oAuthResponse.get(), parentCharacter);
-        if(parentCharacter.isPresent()) {
+        if(!generateNewToken) {
             // we need no new token, only the data update
             return null;
         }

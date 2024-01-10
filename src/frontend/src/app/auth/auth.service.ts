@@ -10,7 +10,6 @@ const jwtHelper = new JwtHelperService();
 export class AuthService {
   public isAuthenticated(): boolean {
     const token = localStorage.getItem("token");
-    console.log('isAuthenticated token', token, typeof(token), token == null, token!.length);
     if(token == null || token?.length < 8) {
       console.log('isAuthenticated', 'invalid token!');
       return false;

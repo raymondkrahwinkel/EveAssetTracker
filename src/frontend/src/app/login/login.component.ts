@@ -1,12 +1,7 @@
 import {Component, Inject} from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
-import {HttpClient} from "@angular/common/http";
-import {environment} from "../../environments/environment";
-import {ActivatedRoute, Router} from "@angular/router";
-import {DeviceDetectorService} from "ngx-device-detector";
 import {BackendService} from "../services/backend.service";
 import {Title} from "@angular/platform-browser";
-import {ResponseValidate} from "../models/api/response.validate";
 
 @Component({
   selector: 'app-login',
@@ -22,11 +17,7 @@ export class LoginComponent {
   // todo: add loading indicator when url is being loaded from the backend
 
   constructor(
-    private route: ActivatedRoute,
     private backend: BackendService,
-    private router: Router,
-    private http: HttpClient,
-    private deviceDetector: DeviceDetectorService,
     private titleService: Title,
     @Inject(DOCUMENT) private document: Document
   ) {
@@ -40,9 +31,5 @@ export class LoginComponent {
         self.hasUrl = true;
       }
     });
-  }
-
-  ngOnInit() {
-
   }
 }

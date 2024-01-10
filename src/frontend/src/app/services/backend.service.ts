@@ -1,20 +1,36 @@
 import { Injectable } from '@angular/core';
-import {HttpClient, HttpHeaders} from "@angular/common/http";
+import {HttpClient, HttpHeaders, HttpParams} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {ResponsePing} from "../models/api/response.ping";
 import {ResponseBaseWithData} from "../models/api/response.base.data";
 import {Character} from "../models/character";
+import {AuthService} from "../auth/auth.service";
 
 @Injectable({
   providedIn: 'root'
 })
 export class BackendService {
+  constructor(private http: HttpClient, private authService: AuthService) { }
 
-  constructor(private http: HttpClient) { }
+  public async getLoginUrl(session: string|null, addCharacter: boolean = false, reAuthentication: boolean = false): Promise<any> {
+    let params = new HttpParams()
+        .set('state', crypto.randomUUID())
+        .set('s', session ?? '')
+        .set('ra', reAuthentication)
+        .set('ac', addCharacter);
 
-  public async getLoginUrl(state: string|null): Promise<any> {
+    if(addCharacter) {
+      let characterId = this.authService.getAuthenticatedInformation()?.id
+      console.log('character id', characterId);
+      if(characterId != null) {
+        params = params.append('pc', characterId);
+      }
+    }
+
+    console.log(params);
+
     return new Promise<any>(resolve => {
-      this.http.get(environment.apiUrl + '/auth/login/url' + (state != null ? '?state=' + state : ''), { responseType: 'text' })
+      this.http.get(environment.apiUrl + '/auth/login/url?' + params.toString(), { responseType: 'text' })
         .subscribe(data => resolve(data));
     });
   }

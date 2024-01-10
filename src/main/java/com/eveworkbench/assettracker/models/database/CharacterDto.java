@@ -40,6 +40,9 @@ public class CharacterDto {
     @OneToMany(mappedBy = "character")
     private Set<SessionDto> sessions;
 
+    @OneToMany(mappedBy = "parentCharacter")
+    private Set<LoginStateDto> loginStates;
+
     public Integer getId() {
         return id;
     }
