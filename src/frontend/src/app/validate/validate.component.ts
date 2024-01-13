@@ -7,6 +7,7 @@ import {DeviceDetectorService} from "ngx-device-detector";
 import {Title} from "@angular/platform-browser";
 import {environment} from "../../environments/environment";
 import {ResponseValidate} from "../models/api/response.validate";
+import {ConfigService} from "../services/config.service";
 
 @Component({
   selector: 'app-validate',
@@ -17,6 +18,7 @@ import {ResponseValidate} from "../models/api/response.validate";
 export class ValidateComponent {
   constructor(
     private route: ActivatedRoute,
+    private configService: ConfigService,
     private backend: BackendService,
     private router: Router,
     private http: HttpClient,
@@ -36,8 +38,8 @@ export class ValidateComponent {
     if(code != null && state != null) {
       // validate the code via the API
       let deviceInfo = this.deviceDetector.getDeviceInfo();
-      console.log(environment.production, environment.apiUrl);
-      this.http.get<ResponseValidate>(environment.apiUrl + '/auth/validate?code=' + code + '&state=' + state + '&browser=' + deviceInfo.browser + '&deviceType=' + deviceInfo.deviceType + '&os=' + deviceInfo.os_version).subscribe({
+      console.log(environment.production, this.configService.config().apiUrl);
+      this.http.get<ResponseValidate>(this.configService.config().apiUrl + '/auth/validate?code=' + code + '&state=' + state + '&browser=' + deviceInfo.browser + '&deviceType=' + deviceInfo.deviceType + '&os=' + deviceInfo.os_version).subscribe({
         next: (data) => {
           // Success
           if(!data.childCharacterValidation) {

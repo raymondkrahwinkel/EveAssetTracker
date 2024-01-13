@@ -21,4 +21,5 @@ spring.jpa.hibernate.ddl-auto=update
 #eve application
 esi.clientid=
 esi.clientsecret=
+esi.callbackUrl=
 esi.scopes=esi-wallet.read_character_wallet.v1 esi-assets.read_assets.v1

@@ -6,12 +6,13 @@ import {ResponseBaseWithData} from "../models/api/response.base.data";
 import {Character} from "../models/character";
 import {AuthService} from "../auth/auth.service";
 import {ResponseCharacterWallet} from "../models/api/response.character.wallet";
+import {ConfigService} from "./config.service";
 
 @Injectable({
   providedIn: 'root'
 })
 export class BackendService {
-  constructor(private http: HttpClient, private authService: AuthService) { }
+  constructor(private configService: ConfigService, private http: HttpClient, private authService: AuthService) { }
 
   public async getLoginUrl(session: string|null, addCharacter: boolean = false, reAuthentication: boolean = false): Promise<any> {
     let params = new HttpParams()
@@ -31,14 +32,14 @@ export class BackendService {
     console.log(params);
 
     return new Promise<any>(resolve => {
-      this.http.get(environment.apiUrl + '/auth/login/url?' + params.toString(), { responseType: 'text' })
+      this.http.get(this.configService.config().apiUrl + '/auth/login/url?' + params.toString(), { responseType: 'text' })
         .subscribe(data => resolve(data));
     });
   }
 
   public async ping(): Promise<any> {
     return new Promise<any>((resolve, reject) => {
-      this.http.post<ResponsePing>(environment.apiUrl + '/auth/ping', '', {
+      this.http.post<ResponsePing>(this.configService.config().apiUrl + '/auth/ping', '', {
         headers: this.getAuthHeaders(),
       }).subscribe({
         next: (data) => {
@@ -68,7 +69,7 @@ export class BackendService {
 
   public async logout(): Promise<boolean> {
     return new Promise<boolean>(resolve => {
-      this.http.post(environment.apiUrl + '/auth/logout', '', {
+      this.http.post(this.configService.config().apiUrl + '/auth/logout', '', {
         headers: this.getAuthHeaders(),
         responseType: 'text'
       }).subscribe({
@@ -81,7 +82,7 @@ export class BackendService {
 
   public async getCharacter(id: number): Promise<Character> {
     return new Promise<Character>((resolve, reject) => {
-      this.http.get<ResponseBaseWithData<Character>>(environment.apiUrl + '/character/' + id, {
+      this.http.get<ResponseBaseWithData<Character>>(this.configService.config().apiUrl + '/character/' + id, {
         headers: this.getAuthHeaders(),
       }).subscribe({
         next: (data) => {
@@ -106,7 +107,7 @@ export class BackendService {
 
   public async getWallet(id: number): Promise<ResponseCharacterWallet> {
     return new Promise<ResponseCharacterWallet>((resolve, reject) => {
-      this.http.get<ResponseCharacterWallet>(environment.apiUrl + '/wallet/balance/' + id, {
+      this.http.get<ResponseCharacterWallet>(this.configService.config().apiUrl + '/wallet/balance/' + id, {
         headers: this.getAuthHeaders(),
       }).subscribe({
         next: (data) => {

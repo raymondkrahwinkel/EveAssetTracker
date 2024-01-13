@@ -34,6 +34,9 @@ public class AuthenticationController {
     @Value("${esi.scopes:#{\"\"}}")
     private String esiScopes;
 
+    @Value("${esi.callbackUrl:#{null}}")
+    private String callbackUrl;
+
     private final AuthenticationService authenticationService;
     private final SessionRepository sessionRepository;
     private final LoginStateRepository loginStateRepository;
@@ -51,6 +54,8 @@ public class AuthenticationController {
     public String getLoginUrl(@RequestParam UUID state, @RequestParam boolean ra, @RequestParam boolean ac, @RequestParam Optional<Integer> pc, @RequestParam Optional<UUID> session) throws URISyntaxException {
         if(clientId == null) {
             throw new RuntimeException("Missing esi client id");
+        } else if(callbackUrl == null) {
+            throw new RuntimeException("Missing esi callback url");
         }
 
         // register the login state
@@ -71,7 +76,7 @@ public class AuthenticationController {
 
         loginStateRepository.save(loginState);
 
-        String callbackUrl = "http://localhost:4200/auth/callback";
+        String callbackUrl = "";
         String url = String.format("https://login.eveonline.com/v2/oauth/authorize/?response_type=code&redirect_uri=%s&client_id=%s&scope=%s&state=%s", URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8), clientId, URLEncoder.encode(esiScopes, StandardCharsets.UTF_8), state);
         URI uri = new URI(url);
         return uri.toString();

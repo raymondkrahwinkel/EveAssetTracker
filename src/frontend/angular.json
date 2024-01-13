@@ -26,7 +26,8 @@
             "tsConfig": "tsconfig.app.json",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              "src/app-config.json"
             ],
             "styles": [
               "node_modules/remixicon/fonts/remixicon.css",
@@ -93,7 +94,8 @@
             "tsConfig": "tsconfig.spec.json",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              "src/app-config.json"
             ],
             "styles": [
               "src/styles.css"
