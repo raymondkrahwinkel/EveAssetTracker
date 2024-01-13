@@ -1,8 +1,15 @@
 package com.eveworkbench.assettracker.services;
 
 import com.eveworkbench.assettracker.factories.HttpClientFactory;
+import com.eveworkbench.assettracker.models.database.CharacterDto;
+import com.eveworkbench.assettracker.models.database.EsiEtagDto;
+import com.eveworkbench.assettracker.models.esi.EsiBaseResponse;
 import com.eveworkbench.assettracker.models.esi.OAuthResponse;
+import com.eveworkbench.assettracker.models.esi.WalletResponse;
+import com.eveworkbench.assettracker.repositories.CharacterRepository;
+import com.eveworkbench.assettracker.repositories.EsiEtagRepository;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.InvalidPropertyException;
@@ -22,8 +29,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+// todo: set default user-agent
+
 @Service
 public class EsiService {
+
     // get the client id from the configuration
     @Value("${esi.clientid}")
     private String clientId;
@@ -33,10 +43,17 @@ public class EsiService {
     private String clientSecret;
 
     @Autowired
-    private HttpClientFactory httpClientFactory;
+    protected CharacterRepository characterRepository;
 
-    private final Logger logger = LoggerFactory.getLogger(EsiService.class);
+    @Autowired
+    protected HttpClientFactory httpClientFactory;
 
+    @Autowired
+    protected EsiEtagRepository esiEtagRepository;
+
+    protected final Logger logger = LoggerFactory.getLogger(EsiService.class);
+
+    public EsiService() { }
 
     // region authentication
     // get the oauth token information
@@ -87,7 +104,7 @@ public class EsiService {
 
     // refresh access token request
     public Optional<OAuthResponse> refreshToken(String refreshToken) {
-        // check if the clientid and secret are set
+        // check if the client id and secret are set
         if(clientId == null || clientId.isEmpty()) {
             throw new InvalidPropertyException(EsiService.class, "clientId", "esi.clientId is not set in the application properties");
         }
@@ -133,10 +150,10 @@ public class EsiService {
     // endregion
 
     // region support
-    private static String getFormDataAsString(Map<String, String> formData) {
+    protected static String getFormDataAsString(Map<String, String> formData) {
         StringBuilder formBodyBuilder = new StringBuilder();
         for (Map.Entry<String, String> singleEntry : formData.entrySet()) {
-            if (formBodyBuilder.length() > 0) {
+            if (!formBodyBuilder.isEmpty()) {
                 formBodyBuilder.append("&");
             }
             formBodyBuilder.append(URLEncoder.encode(singleEntry.getKey(), StandardCharsets.UTF_8));
@@ -144,6 +161,79 @@ public class EsiService {
             formBodyBuilder.append(URLEncoder.encode(singleEntry.getValue(), StandardCharsets.UTF_8));
         }
         return formBodyBuilder.toString();
+    }
+
+    protected HttpRequest.Builder getBaseCharacterHttpRequestBuilder(String url, Integer characterId) throws URISyntaxException {
+        var character = characterRepository.findById(characterId);
+        if(character.isEmpty()) {
+            throw new RuntimeException("Cannot get character with id: " + characterId);
+        }
+
+        return getBaseCharacterHttpRequestBuilder(url, character.get().getAccessToken());
+    }
+
+    protected HttpRequest.Builder getBaseCharacterHttpRequestBuilder(String url, String accessToken) throws URISyntaxException {
+        // create request for authentication
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(new URI(url))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .header("Authorization", "Bearer " + accessToken);
+
+        // get the etag information
+        Optional<EsiEtagDto> etagDto = esiEtagRepository.findByUrlIgnoreCase(url);
+        if(etagDto.isPresent()) {
+            builder = builder.header("If-None-Match", etagDto.get().getEtag());
+        }
+
+        return builder;
+    }
+
+    protected Boolean interpretEsiResponse(EsiBaseResponse<?> response, HttpResponse<String> httpResponse) {
+        // get the base ESI response information
+        response.etag = httpResponse.headers().firstValue("ETag").orElse(null);
+        response.pages = httpResponse.headers().firstValue("X-Pages").map(Integer::getInteger).orElse(null);
+        response.statusCode = httpResponse.statusCode();
+        response.contentModified = httpResponse.statusCode() != 304;
+        response.esiErrorLimitRemain = httpResponse.headers().firstValue("X-Esi-Error-Limit-Reset").map(Integer::getInteger).orElse(null);
+        response.esiErrorLimitReset = httpResponse.headers().firstValue("X-Esi-Error-Limit-Remain").map(Integer::getInteger).orElse(null);
+
+        // check if the status response is ok
+        if(httpResponse.statusCode() == 420 /* Error limit */) {
+            response.hasError = true;
+            response.error = "ESI error limit reached";
+
+            return false;
+        }
+
+        // check if there is generic error
+        if(!(httpResponse.statusCode() >= 200 && httpResponse.statusCode() < 400)) {
+            response.hasError = true;
+            response.error = "Error status code received from ESI";
+
+            return false;
+        }
+
+        // store the ETag to the database
+        Optional<String> etagValue = httpResponse.headers().firstValue("ETag");
+        if(etagValue.isPresent()) {
+            String etag = etagValue.get();
+            if(etag.startsWith("W/")) {
+                etag = etag.replace("\"", "");
+            }
+
+            String url = httpResponse.uri().toString();
+            EsiEtagDto etagDto = esiEtagRepository.findByUrlIgnoreCase(url).orElse(new EsiEtagDto());
+            etagDto.setUrl(url);
+            etagDto.setEtag(etag);
+            esiEtagRepository.save(etagDto);
+        }
+
+        return true;
+    }
+
+    protected static <T extends EsiBaseResponse<T>> Optional<T> readValueGson(String content, Class<T> type) {
+        T value = (new Gson()).fromJson(content, new TypeToken<T>(){}.getType());
+        return Optional.ofNullable(value);
     }
     // endregion
 }

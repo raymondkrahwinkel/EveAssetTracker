@@ -17,6 +17,8 @@ import Swal from 'sweetalert2';
 export class AuthenticatedComponent {
   protected authenticatedInformation: TokenInformation|null = null;
   protected character: Character|null = null;
+  protected walletValue: number = 0;
+  protected walletValueDifference: number = 0;
   private sessionKeepAlive: boolean = true;
 
   constructor(private backend: BackendService, private router: Router, protected authService: AuthService) {}
@@ -51,6 +53,8 @@ export class AuthenticatedComponent {
       this.backend.getCharacter(this.authenticatedInformation.id).then((character) => {
         this.character = character;
         console.log("character data", character)
+
+        this.updateCharacterData();
       });
     }
   }
@@ -59,12 +63,36 @@ export class AuthenticatedComponent {
     this.ping();
   }
 
+  formatIsk(value: number): string {
+    return new Intl.NumberFormat("nl-NL", {
+      maximumFractionDigits: 0
+    }).format(value);
+  }
+
+  formatDifferenceIsk(value: number): string {
+    if(value < 0) {
+      return '<span class="text-danger">' + this.formatIsk(value) + '</span>';
+    } else {
+      return '<span class="text-success">' + "+" + this.formatIsk(value) + '</span>';
+    }
+  }
+
+  async updateCharacterData() {
+    if(this.character != null) {
+      this.backend.getWallet(this.character?.id).then((data) => {
+        this.walletValue = data.data;
+        this.walletValueDifference = data.difference ?? 0;
+      });
+    }
+  }
+
   async ping() {
     while(this.sessionKeepAlive) {
       if(this.authService.isAuthenticated()) {
         this.backend.ping().then(
           (data) => {
             localStorage.setItem("token", data.toString());
+            this.updateCharacterData();
           },
           (reason) => {
             if(!this.sessionKeepAlive) {

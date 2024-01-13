@@ -5,6 +5,7 @@ import com.eveworkbench.assettracker.repositories.CharacterRepository;
 import com.eveworkbench.assettracker.repositories.LoginStateRepository;
 import com.eveworkbench.assettracker.repositories.SessionRepository;
 import com.eveworkbench.assettracker.services.AuthenticationService;
+import com.eveworkbench.assettracker.services.EsiWalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -30,9 +31,10 @@ public class SpringConfiguration {
     @Autowired
     AuthenticationService authenticationService;
 
-    // todo: add background task to cleanup expired sessions
-    // todo: add schedule to keep the access token up2date
-    // region Schedules
+    @Autowired
+    EsiWalletService esiWalletService;
+
+    // region esi token refresh
     @Scheduled(fixedDelay = (60 * 1000))
     public void esiTokenRefresh() {
         // get all characters with access and refresh token set
@@ -49,8 +51,9 @@ public class SpringConfiguration {
 
         System.out.println(LocalDateTime.now() + " run token refresh schedule");
     }
+    // endregion
 
-    // cleanup tasks
+    // region cleanup tasks
     @Scheduled(fixedDelay = (60 * 1000))
     public void cleanup() {
         System.out.println(LocalDateTime.now() + " run cleanup");
@@ -58,6 +61,18 @@ public class SpringConfiguration {
         LocalDateTime expireTime = LocalDateTime.now().minusMinutes(5);
         loginStateRepository.removeByCreatedAtBefore(expireTime);
         sessionRepository.removeByExpiresAtBefore(Date.from(expireTime.toInstant(ZoneOffset.systemDefault().getRules().getOffset(expireTime))));
+    }
+    // endregion
+
+    // region wallet update
+    @Scheduled(fixedDelay = (30 * 1000))
+    public void updateWallets() {
+        List<CharacterDto> characters = characterRepository.findByAccessTokenIsNotNullAndRefreshTokenIsNotNull();
+        for(CharacterDto character : characters) {
+            esiWalletService.getWalletBalance(character);
+        }
+
+        System.out.println(LocalDateTime.now() + " run wallet update");
     }
     // endregion
 }

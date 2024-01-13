@@ -9,10 +9,8 @@ import java.util.Date;
 import java.util.Set;
 
 @Entity
-@Table(name = CharacterDto.TABLE_NAME)
+@Table(name = "characters")
 public class CharacterDto {
-    public static final String TABLE_NAME = "Characters";
-
     @Id
     @Column(name = "id", nullable = false)
 //    @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +22,9 @@ public class CharacterDto {
 
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
     private Set<CharacterDto> children;
+
+    @OneToMany(mappedBy = "character", fetch = FetchType.LAZY)
+    private Set<WalletHistoryDto> walletHistories;
 
     private String name;
     private Date tokenExpiresAt;
@@ -121,5 +122,21 @@ public class CharacterDto {
 
     public void setParent(CharacterDto parent) {
         this.parent = parent;
+    }
+
+    public Set<LoginStateDto> getLoginStates() {
+        return loginStates;
+    }
+
+    public void setLoginStates(Set<LoginStateDto> loginStates) {
+        this.loginStates = loginStates;
+    }
+
+    public Set<WalletHistoryDto> getWalletHistories() {
+        return walletHistories;
+    }
+
+    public void setWalletHistories(Set<WalletHistoryDto> walletHistories) {
+        this.walletHistories = walletHistories;
     }
 }

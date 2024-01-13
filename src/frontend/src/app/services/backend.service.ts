@@ -5,6 +5,7 @@ import {ResponsePing} from "../models/api/response.ping";
 import {ResponseBaseWithData} from "../models/api/response.base.data";
 import {Character} from "../models/character";
 import {AuthService} from "../auth/auth.service";
+import {ResponseCharacterWallet} from "../models/api/response.character.wallet";
 
 @Injectable({
   providedIn: 'root'
@@ -90,6 +91,31 @@ export class BackendService {
             reject(403); // send 403 back because received token is invalid
           } else {
             resolve(data.data);
+          }
+        },
+        error: (e) => {
+          if (e.status == 403) {
+            reject(403);
+          } else {
+            reject(e);
+          }
+        }
+      });
+    });
+  }
+
+  public async getWallet(id: number): Promise<ResponseCharacterWallet> {
+    return new Promise<ResponseCharacterWallet>((resolve, reject) => {
+      this.http.get<ResponseCharacterWallet>(environment.apiUrl + '/wallet/balance/' + id, {
+        headers: this.getAuthHeaders(),
+      }).subscribe({
+        next: (data) => {
+          console.debug((new Date).toLocaleString(), 'wallet.balance response', data);
+          if (data == null || !data.success) {
+            console.error(data?.message ?? "");
+            reject(403); // send 403 back because received token is invalid
+          } else {
+            resolve(data);
           }
         },
         error: (e) => {

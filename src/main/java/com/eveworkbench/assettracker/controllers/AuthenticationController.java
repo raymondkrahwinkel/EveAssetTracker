@@ -1,6 +1,5 @@
 package com.eveworkbench.assettracker.controllers;
 
-import com.eveworkbench.assettracker.models.api.response.ResponseBaseWithData;
 import com.eveworkbench.assettracker.models.api.response.ResponsePing;
 import com.eveworkbench.assettracker.models.api.response.ResponseValidate;
 import com.eveworkbench.assettracker.models.database.CharacterDto;
@@ -31,6 +30,9 @@ import java.util.UUID;
 public class AuthenticationController {
     @Value("${esi.clientid:#{null}}")
     private String clientId;
+
+    @Value("${esi.scopes:#{\"\"}}")
+    private String esiScopes;
 
     private final AuthenticationService authenticationService;
     private final SessionRepository sessionRepository;
@@ -70,7 +72,7 @@ public class AuthenticationController {
         loginStateRepository.save(loginState);
 
         String callbackUrl = "http://localhost:4200/auth/callback";
-        String url = String.format("https://login.eveonline.com/v2/oauth/authorize/?response_type=code&redirect_uri=%s&client_id=%s&state=%s", URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8), clientId, state);
+        String url = String.format("https://login.eveonline.com/v2/oauth/authorize/?response_type=code&redirect_uri=%s&client_id=%s&scope=%s&state=%s", URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8), clientId, URLEncoder.encode(esiScopes, StandardCharsets.UTF_8), state);
         URI uri = new URI(url);
         return uri.toString();
     }

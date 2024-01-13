@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import {BackendService} from "../../services/backend.service";
 
 @Component({
   selector: 'app-dashboard',
@@ -9,5 +10,18 @@ import { CommonModule } from '@angular/common';
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent {
+  constructor(private backend: BackendService) {
+  }
 
+  test(): void {
+    this.backend.getWallet(883434905).then((data) => {
+      console.log('test result 883434905', data);
+    });
+    this.backend.getWallet(96380007).then((data) => {
+      console.log('test result 96380007', data);
+    });
+    this.backend.getWallet(90550707).then((data) => {
+      console.log('test result 90550707 (wrong)', data);
+    });
+  }
 }

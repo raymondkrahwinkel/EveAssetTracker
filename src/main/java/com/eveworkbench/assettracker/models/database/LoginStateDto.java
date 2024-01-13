@@ -10,10 +10,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = LoginStateDto.TABLE_NAME)
+@Table(name = "login_states")
 public class LoginStateDto {
-    public static final String TABLE_NAME = "LoginStates";
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)

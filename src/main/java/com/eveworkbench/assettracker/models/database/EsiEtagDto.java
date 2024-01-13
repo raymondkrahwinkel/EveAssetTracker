@@ -7,9 +7,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = EsiEtagDto.TABLE_NAME)
+@Table(name = "esi_etags")
 public class EsiEtagDto {
-    public static final String TABLE_NAME = "EsiEtags";
+    public static final String TABLE_NAME = "";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

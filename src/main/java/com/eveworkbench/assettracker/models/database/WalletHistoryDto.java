@@ -4,28 +4,37 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.sql.Date;
 
 @Entity
-@Table(name = "sessions")
-public class SessionDto {
+@Table(name = "wallet_histories")
+public class WalletHistoryDto {
+    public WalletHistoryDto() {
+
+    }
+
+    public WalletHistoryDto(CharacterDto character, Date date) {
+        this.character = character;
+        this.date = date;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @JsonBackReference // break a reference loop
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "characterId", nullable = false)
+    @JoinColumn(name = "character_id", nullable = false)
     private CharacterDto character;
 
-    private String browser;
-    private String device;
-    private String os;
+    private Double startValue;
+    private Double value;
 
-    private String token;
-    private Date expiresAt;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE, style = "yyyy-MM-dd")
+    private Date date;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -49,44 +58,20 @@ public class SessionDto {
         this.character = character;
     }
 
-    public String getBrowser() {
-        return browser;
+    public Double getValue() {
+        return value;
     }
 
-    public void setBrowser(String browser) {
-        this.browser = browser;
+    public void setValue(Double value) {
+        this.value = value;
     }
 
-    public String getDevice() {
-        return device;
+    public Date getDate() {
+        return date;
     }
 
-    public void setDevice(String device) {
-        this.device = device;
-    }
-
-    public String getOs() {
-        return os;
-    }
-
-    public void setOs(String os) {
-        this.os = os;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public Date getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(Date expiresAt) {
-        this.expiresAt = expiresAt;
+    public void setDate(Date date) {
+        this.date = date;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -103,5 +88,13 @@ public class SessionDto {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Double getStartValue() {
+        return startValue;
+    }
+
+    public void setStartValue(Double startValue) {
+        this.startValue = startValue;
     }
 }
