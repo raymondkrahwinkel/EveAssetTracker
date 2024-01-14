@@ -8,7 +8,7 @@ docker build . -t [image] -f src/main/Dockerfile<br />
 docker build src/frontend -t [image] -f src/frontend/Dockerfile<br />
 <h3>Docker runs</h3>
 docker run -d --name backend -p 8080:8080 -v [localPath]:/app/application.properties [image]<br />
-docker run -d --name frontend -e API_URL=[backend_url] -p 80:80 -v [localPath]:/usr/share/nginx/html/app-config.json [image]<br />
+docker run -d --name frontend -p 80:80 -v [localPath]:/usr/share/nginx/html/app-config.json [image]<br />
 
 <h3>Todo:</h3>
 - add unit tests for EsiWalletService <br />

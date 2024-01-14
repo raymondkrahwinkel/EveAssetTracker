@@ -76,7 +76,6 @@ public class AuthenticationController {
 
         loginStateRepository.save(loginState);
 
-        String callbackUrl = "";
         String url = String.format("https://login.eveonline.com/v2/oauth/authorize/?response_type=code&redirect_uri=%s&client_id=%s&scope=%s&state=%s", URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8), clientId, URLEncoder.encode(esiScopes, StandardCharsets.UTF_8), state);
         URI uri = new URI(url);
         return uri.toString();

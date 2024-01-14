@@ -1,2 +1,7 @@
 Dockerfile
-frontend
+/src/frontend/
+/.idea/
+/.github/
+/.run/
+/.jpb/
+/README.md
