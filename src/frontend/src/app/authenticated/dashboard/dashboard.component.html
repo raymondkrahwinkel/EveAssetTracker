@@ -1,2 +1,2 @@
 <p>This is the dashboard!</p>
-<button (click)="test()">Test!</button>
+<button (click)="test()" *ngIf="!environment.production">Test!</button>

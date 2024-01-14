@@ -10,12 +10,9 @@ import com.eveworkbench.assettracker.models.esi.OAuthResponse;
 import com.eveworkbench.assettracker.repositories.CharacterRepository;
 import com.eveworkbench.assettracker.repositories.SessionRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.net.URISyntaxException;
-import java.security.InvalidParameterException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
@@ -25,14 +22,17 @@ import java.util.regex.Pattern;
 
 @Service
 public class AuthenticationService {
-    @Autowired
-    private CharacterRepository characterRepository;
+    private final CharacterRepository characterRepository;
 
-    @Autowired
-    private SessionRepository sessionRepository;
+    private final SessionRepository sessionRepository;
 
-    @Autowired
-    private EsiService esiService;
+    private final EsiService esiService;
+
+    public AuthenticationService(CharacterRepository characterRepository, SessionRepository sessionRepository, EsiService esiService) {
+        this.characterRepository = characterRepository;
+        this.sessionRepository = sessionRepository;
+        this.esiService = esiService;
+    }
 
     // validate the oauth code and return a new JWT token
     // returns: null when it is a child character

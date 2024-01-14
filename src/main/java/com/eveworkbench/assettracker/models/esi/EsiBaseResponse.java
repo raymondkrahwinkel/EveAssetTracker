@@ -4,7 +4,7 @@ import java.util.Optional;
 
 public abstract class EsiBaseResponse<T> {
     public String error;
-    public Boolean hasError;
+    public Boolean hasError = false;
     public Integer sso_status;
     public Integer timeout;
     public T value;

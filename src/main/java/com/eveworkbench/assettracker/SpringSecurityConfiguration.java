@@ -24,10 +24,13 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SpringSecurityConfiguration {
-    @Autowired
-    private CharacterRepository characterRepository;
-    @Autowired
-    private SessionRepository sessionRepository;
+    private final CharacterRepository characterRepository;
+    private final SessionRepository sessionRepository;
+
+    public SpringSecurityConfiguration(CharacterRepository characterRepository, SessionRepository sessionRepository) {
+        this.characterRepository = characterRepository;
+        this.sessionRepository = sessionRepository;
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {

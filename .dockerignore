@@ -5,3 +5,4 @@ Dockerfile
 /.run/
 /.jpb/
 /README.md
+/qodana.yaml

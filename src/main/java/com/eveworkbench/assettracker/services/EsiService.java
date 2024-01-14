@@ -42,18 +42,19 @@ public class EsiService {
     @Value("${esi.clientsecret}")
     private String clientSecret;
 
-    @Autowired
-    protected CharacterRepository characterRepository;
+    protected final CharacterRepository characterRepository;
 
-    @Autowired
-    protected HttpClientFactory httpClientFactory;
+    protected final HttpClientFactory httpClientFactory;
 
-    @Autowired
-    protected EsiEtagRepository esiEtagRepository;
+    protected final EsiEtagRepository esiEtagRepository;
 
     protected final Logger logger = LoggerFactory.getLogger(EsiService.class);
 
-    public EsiService() { }
+    public EsiService(CharacterRepository characterRepository, HttpClientFactory httpClientFactory, EsiEtagRepository esiEtagRepository) {
+        this.characterRepository = characterRepository;
+        this.httpClientFactory = httpClientFactory;
+        this.esiEtagRepository = esiEtagRepository;
+    }
 
     // region authentication
     // get the oauth token information

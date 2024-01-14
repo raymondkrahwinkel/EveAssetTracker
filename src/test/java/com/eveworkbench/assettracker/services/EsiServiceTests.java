@@ -2,6 +2,8 @@ package com.eveworkbench.assettracker.services;
 
 import com.eveworkbench.assettracker.factories.HttpClientFactory;
 import com.eveworkbench.assettracker.models.esi.OAuthResponse;
+import com.eveworkbench.assettracker.repositories.CharacterRepository;
+import com.eveworkbench.assettracker.repositories.EsiEtagRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +33,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT) // this is needed because we have a base setup for the httpClient and one test that doesn't use httpClient
 public class EsiServiceTests {
-    @InjectMocks
     private EsiService esiService;
 
     @Mock
@@ -43,9 +44,15 @@ public class EsiServiceTests {
     @Mock
     private HttpResponse<String> httpResponse;
 
+    @Mock
+    private CharacterRepository characterRepository;
+
+    @Mock
+    private EsiEtagRepository esiEtagRepository;
+
     @BeforeEach
     public void setup() throws IOException, InterruptedException {
-        MockitoAnnotations.openMocks(this);
+        esiService = new EsiService(characterRepository, httpClientFactory, esiEtagRepository);
 
         when(httpClientFactory.create()).thenReturn(httpClient);
         when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandlers.ofString().getClass()))).thenReturn(httpResponse);

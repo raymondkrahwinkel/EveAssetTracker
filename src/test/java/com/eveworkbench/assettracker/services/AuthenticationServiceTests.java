@@ -10,6 +10,8 @@ import com.eveworkbench.assettracker.models.esi.OAuthResponse;
 import com.eveworkbench.assettracker.repositories.CharacterRepository;
 import com.eveworkbench.assettracker.repositories.SessionRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,8 +19,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 
 import java.lang.reflect.InvocationTargetException;
@@ -28,16 +30,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @TestPropertySource(locations="classpath:application-test.properties")
 @ExtendWith(MockitoExtension.class)
-@AutoConfigureTestEntityManager // needed for repository injection
 public class AuthenticationServiceTests {
-    @InjectMocks
-    private AuthenticationService authenticationService;
-
     @Mock
     EsiService esiService;
 
@@ -47,9 +45,11 @@ public class AuthenticationServiceTests {
     @Mock
     SessionRepository sessionRepository;
 
+    AuthenticationService authenticationService;
+
     @BeforeEach
     public void setup() {
-        MockitoAnnotations.openMocks(this);
+        authenticationService = new AuthenticationService(characterRepository, sessionRepository, esiService);
     }
 
     // todo: tests for validateCharacter
@@ -166,7 +166,7 @@ public class AuthenticationServiceTests {
     }
 
     @Test
-    void characterRefreshAccessToken_Test() {
+    void characterRefreshAccessToken_missingCharacter_Test() {
         // character id null
         Throwable throwable = assertThrows(IllegalArgumentException.class, () -> authenticationService.characterRefreshAccessToken(null));
         assertEquals(throwable.getMessage(), "Character id cannot be null");
@@ -174,21 +174,39 @@ public class AuthenticationServiceTests {
         // missing character dto
         throwable = assertThrows(EntityNotFoundException.class, () -> authenticationService.characterRefreshAccessToken(1));
         assertEquals(throwable.getMessage(), "Character with id: 1 could not be found");
+    }
 
+    @Test
+    void characterRefreshAccessToken_missingAccessRefreshToken_Test() {
         // missing access / refresh token
         CharacterDto characterDto = new CharacterDto();
         characterDto.setId(1);
         when(characterRepository.findById(1)).thenReturn(Optional.of(characterDto));
 
-        throwable = assertThrows(RuntimeException.class, () -> authenticationService.characterRefreshAccessToken(1));
+        Throwable throwable = assertThrows(RuntimeException.class, () -> authenticationService.characterRefreshAccessToken(1));
         assertEquals(throwable.getMessage(), "Character access and/or refresh token is empty");
+    }
 
-        // return empty oAuthResponse
+    @Test
+    void characterRefreshAccessToken_invalidEsiResponse_Test() {
+        // create fake character
+        CharacterDto characterDto = new CharacterDto();
+        characterDto.setId(1);
         characterDto.setAccessToken("accessTokenValue");
         characterDto.setRefreshToken("refreshTokenValue");
 
+        when(characterRepository.findById(1)).thenReturn(Optional.of(characterDto));
         when(esiService.refreshToken("refreshTokenValue")).thenReturn(Optional.empty());
         assertFalse(authenticationService.characterRefreshAccessToken(1));
+    }
+
+    @Test
+    void characterRefreshAccessToken_validEsiResponse_Test() {
+        // create fake character
+        CharacterDto characterDto = new CharacterDto();
+        characterDto.setId(1);
+        characterDto.setAccessToken("accessTokenValue");
+        characterDto.setRefreshToken("refreshTokenValue");
 
         // create fake response object
         OAuthResponse fakeResponse = new OAuthResponse();
@@ -197,10 +215,7 @@ public class AuthenticationServiceTests {
         fakeResponse.expires_in = 1000;
         fakeResponse.token_type = "Bearer";
 
-        // valid response
-        characterDto.setAccessToken("accessTokenValue");
-        characterDto.setRefreshToken("refreshTokenValue");
-
+        when(characterRepository.findById(1)).thenReturn(Optional.of(characterDto));
         when(esiService.refreshToken("refreshTokenValue")).thenReturn(Optional.of(fakeResponse));
         assertTrue(authenticationService.characterRefreshAccessToken(1));
     }

@@ -1,10 +1,12 @@
 package com.eveworkbench.assettracker.services;
 
+import com.eveworkbench.assettracker.factories.HttpClientFactory;
 import com.eveworkbench.assettracker.models.database.CharacterDto;
 import com.eveworkbench.assettracker.models.database.WalletHistoryDto;
 import com.eveworkbench.assettracker.models.esi.WalletResponse;
+import com.eveworkbench.assettracker.repositories.CharacterRepository;
+import com.eveworkbench.assettracker.repositories.EsiEtagRepository;
 import com.eveworkbench.assettracker.repositories.WalletHistoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.net.URISyntaxException;
@@ -18,11 +20,12 @@ import java.util.concurrent.ExecutionException;
 // todo: add tests
 @Service
 public class EsiWalletService extends EsiService {
-    @Autowired
     WalletHistoryRepository walletHistoryRepository;
 
-    public EsiWalletService() {
-        super();
+    public EsiWalletService(CharacterRepository characterRepository, HttpClientFactory httpClientFactory, EsiEtagRepository esiEtagRepository, WalletHistoryRepository walletHistoryRepository) {
+        super(characterRepository, httpClientFactory, esiEtagRepository);
+
+        this.walletHistoryRepository = walletHistoryRepository;
     }
 
     public Optional<WalletResponse> getWalletBalance(Integer characterId) {
@@ -37,6 +40,13 @@ public class EsiWalletService extends EsiService {
     public Optional<WalletResponse> getWalletBalance(CharacterDto character) {
         try {
             WalletResponse response = new WalletResponse();
+
+            // check if the access and refresh token are set and not expired
+            if(character.getAccessToken() == null || character.getAccessToken().isEmpty() || character.getRefreshToken() == null || character.getRefreshToken().isEmpty() || character.getTokenExpiresAt() == null || character.getTokenExpiresAt().before(new java.util.Date())) {
+                response.hasError = true;
+                response.error = "No valid access token available for character";
+                return Optional.of(response);
+            }
 
             HttpRequest request = getBaseCharacterHttpRequestBuilder("https://esi.evetech.net/latest/characters/" + character.getId() + "/wallet/", character.getAccessToken())
                     .GET()
@@ -58,10 +68,20 @@ public class EsiWalletService extends EsiService {
             if(response.contentModified) {
                 response.value = Double.parseDouble(httpResponse.body());
                 walletHistory.setValue(response.value);
-                if(walletHistory.getId() == null) {
+                if (walletHistory.getId() == null) {
                     walletHistory.setStartValue(response.value);
                 }
                 walletHistoryRepository.save(walletHistory);
+            } else if(walletHistory.getValue() == null) {
+                // get the previous wallet history
+                Optional<WalletHistoryDto> prevWalletHistory = walletHistoryRepository.findByCharacterAndDateBeforeOrderByDateDesc(character, Date.valueOf(LocalDate.now()));
+                if(prevWalletHistory.isPresent()) {
+                    walletHistory.setStartValue(prevWalletHistory.get().getValue());
+                    walletHistory.setValue(prevWalletHistory.get().getValue());
+
+                    response.value = walletHistory.getValue();
+                    walletHistoryRepository.save(walletHistory);
+                }
             } else {
                 // get the wallet value from the database
                 response.value = walletHistory.getValue();

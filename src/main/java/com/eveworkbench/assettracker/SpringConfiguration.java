@@ -18,21 +18,29 @@ import java.util.List;
 @Configuration
 @EnableScheduling
 public class SpringConfiguration {
-    @Autowired
+    final
     CharacterRepository characterRepository;
 
-    @Autowired
+    final
     LoginStateRepository loginStateRepository;
 
 
-    @Autowired
+    final
     SessionRepository sessionRepository;
 
-    @Autowired
+    final
     AuthenticationService authenticationService;
 
-    @Autowired
+    final
     EsiWalletService esiWalletService;
+
+    public SpringConfiguration(CharacterRepository characterRepository, LoginStateRepository loginStateRepository, SessionRepository sessionRepository, AuthenticationService authenticationService, EsiWalletService esiWalletService) {
+        this.characterRepository = characterRepository;
+        this.loginStateRepository = loginStateRepository;
+        this.sessionRepository = sessionRepository;
+        this.authenticationService = authenticationService;
+        this.esiWalletService = esiWalletService;
+    }
 
     // region esi token refresh
     @Scheduled(fixedDelay = (60 * 1000))
