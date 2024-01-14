@@ -10,17 +10,12 @@ import com.eveworkbench.assettracker.models.esi.OAuthResponse;
 import com.eveworkbench.assettracker.repositories.CharacterRepository;
 import com.eveworkbench.assettracker.repositories.SessionRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 
 import java.lang.reflect.InvocationTargetException;
@@ -56,29 +51,29 @@ public class AuthenticationServiceTests {
 
     @Test
     void getCharacterFromOAuthResponse_null_input_Test() throws NoSuchMethodException, IllegalAccessException {
-        Method getCharacterFromOAuthResponseMethod = AuthenticationService.class.getDeclaredMethod("getCharacterFromOAuthResponse", OAuthResponse.class, Optional.class);
+        Method getCharacterFromOAuthResponseMethod = AuthenticationService.class.getDeclaredMethod("getCharacterFromOAuthResponse", OAuthResponse.class, CharacterDto.class);
         getCharacterFromOAuthResponseMethod.setAccessible(true);
 
         try {
-            getCharacterFromOAuthResponseMethod.invoke(authenticationService, (Object) null, Optional.empty());
+            getCharacterFromOAuthResponseMethod.invoke(authenticationService, null, null);
         } catch (InvocationTargetException e) {
-            assertInstanceOf(IllegalArgumentException.class, e.getCause(), () -> "Exception type is correct");
-            assertEquals(e.getCause().getMessage(), "OAuthResponse cannot be empty", () -> "Exception message");
+            assertInstanceOf(IllegalArgumentException.class, e.getCause(), "Exception type is correct");
+            assertEquals(e.getCause().getMessage(), "OAuthResponse cannot be empty", "Exception message");
         }
 
     }
 
     @Test
     void getCharacterFromOAuthResponse_invalid_oauthData_Test() throws NoSuchMethodException, IllegalAccessException {
-        Method getCharacterFromOAuthResponseMethod = AuthenticationService.class.getDeclaredMethod("getCharacterFromOAuthResponse", OAuthResponse.class, Optional.class);
+        Method getCharacterFromOAuthResponseMethod = AuthenticationService.class.getDeclaredMethod("getCharacterFromOAuthResponse", OAuthResponse.class, CharacterDto.class);
         getCharacterFromOAuthResponseMethod.setAccessible(true);
 
         // test empty object
         try {
-            getCharacterFromOAuthResponseMethod.invoke(authenticationService, new OAuthResponse(), Optional.empty());
+            getCharacterFromOAuthResponseMethod.invoke(authenticationService, new OAuthResponse(), null);
         } catch (InvocationTargetException e) {
-            assertInstanceOf(RuntimeException.class, e.getCause(), () -> "Exception type is correct");
-            assertEquals(e.getCause().getMessage(), "Access token cannot be empty", () -> "Exception message");
+            assertInstanceOf(RuntimeException.class, e.getCause(), "Exception type is correct");
+            assertEquals(e.getCause().getMessage(), "Access token cannot be empty", "Exception message");
         }
 
         // test invalid subject information
@@ -95,10 +90,10 @@ public class AuthenticationServiceTests {
         fakeResponse.access_token = jwtToken;
 
         try {
-            getCharacterFromOAuthResponseMethod.invoke(authenticationService, fakeResponse, Optional.empty());
+            getCharacterFromOAuthResponseMethod.invoke(authenticationService, fakeResponse, null);
         } catch (InvocationTargetException e) {
-            assertInstanceOf(RuntimeException.class, e.getCause(), () -> "Exception type is correct");
-            assertEquals(e.getCause().getMessage(), "Failed to get character id from login response", () -> "Exception message");
+            assertInstanceOf(RuntimeException.class, e.getCause(), "Exception type is correct");
+            assertEquals(e.getCause().getMessage(), "Failed to get character id from login response", "Exception message");
         }
 
         //getCharacterFromOAuthResponseMethod.invoke(authenticationService, new OAuthResponse());
@@ -106,7 +101,7 @@ public class AuthenticationServiceTests {
 
     @Test
     void getCharacterFromOAuthResponse_valid_oauthData_Test() throws NoSuchMethodException, IllegalAccessException {
-        Method getCharacterFromOAuthResponseMethod = AuthenticationService.class.getDeclaredMethod("getCharacterFromOAuthResponse", OAuthResponse.class, Optional.class);
+        Method getCharacterFromOAuthResponseMethod = AuthenticationService.class.getDeclaredMethod("getCharacterFromOAuthResponse", OAuthResponse.class, CharacterDto.class);
         getCharacterFromOAuthResponseMethod.setAccessible(true);
 
         // test valid subject information
@@ -126,7 +121,7 @@ public class AuthenticationServiceTests {
         fakeResponse.token_type = "Bearer";
 
         try {
-            var response = (CharacterDto)getCharacterFromOAuthResponseMethod.invoke(authenticationService, fakeResponse, Optional.empty());
+            var response = (CharacterDto)getCharacterFromOAuthResponseMethod.invoke(authenticationService, fakeResponse, null);
 
             assertEquals(response.getId(), 1);
             assertEquals(response.getName(), "tester");
