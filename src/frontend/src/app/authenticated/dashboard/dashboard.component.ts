@@ -2,16 +2,28 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {BackendService} from "../../services/backend.service";
 import {environment} from "../../../environments/environment";
+import {ConfigService} from "../../services/config.service";
+import {WalletHistory} from "../../models/wallethistory";
+import {TableModule} from "primeng/table";
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TableModule],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.css'
+  styleUrl: './dashboard.component.css',
 })
 export class DashboardComponent {
-  constructor(private backend: BackendService) {
+  history: WalletHistory[] = [];
+
+  constructor(private backend: BackendService, private configService: ConfigService) {
+
+  }
+
+  ngOnInit() {
+    this.backend.getWalletHistory().then((data) => {
+      this.history = data.data;
+    });
   }
 
   test(): void {

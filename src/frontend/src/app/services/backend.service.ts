@@ -7,6 +7,7 @@ import {Character} from "../models/character";
 import {AuthService} from "../auth/auth.service";
 import {ResponseCharacterWallet} from "../models/api/response.character.wallet";
 import {ConfigService} from "./config.service";
+import {ResponseWalletHistory} from "../models/api/response.character.wallethistory";
 
 @Injectable({
   providedIn: 'root'
@@ -29,8 +30,6 @@ export class BackendService {
       }
     }
 
-    console.log(params);
-
     return new Promise<any>(resolve => {
       this.http.get(this.configService.config().apiUrl + '/auth/login/url?' + params.toString(), { responseType: 'text' })
         .subscribe(data => resolve(data));
@@ -39,9 +38,7 @@ export class BackendService {
 
   public async ping(): Promise<any> {
     return new Promise<any>((resolve, reject) => {
-      this.http.post<ResponsePing>(this.configService.config().apiUrl + '/auth/ping', '', {
-        headers: this.getAuthHeaders(),
-      }).subscribe({
+      this.createPostRequest<ResponsePing>('/auth/ping', null).subscribe({
         next: (data) => {
           console.debug((new Date).toLocaleString(), 'ping response', data);
           if (data == null || !data.success) {
@@ -82,9 +79,7 @@ export class BackendService {
 
   public async getCharacter(id: number): Promise<Character> {
     return new Promise<Character>((resolve, reject) => {
-      this.http.get<ResponseBaseWithData<Character>>(this.configService.config().apiUrl + '/character/' + id, {
-        headers: this.getAuthHeaders(),
-      }).subscribe({
+      this.createGetRequest<ResponseBaseWithData<Character>>('/character/' + id).subscribe({
         next: (data) => {
           console.debug((new Date).toLocaleString(), 'character.get response', data);
           if (data == null || !data.success) {
@@ -107,9 +102,7 @@ export class BackendService {
 
   public async getWallet(id: number): Promise<ResponseCharacterWallet> {
     return new Promise<ResponseCharacterWallet>((resolve, reject) => {
-      this.http.get<ResponseCharacterWallet>(this.configService.config().apiUrl + '/wallet/balance/' + id, {
-        headers: this.getAuthHeaders(),
-      }).subscribe({
+      this.createGetRequest<ResponseCharacterWallet>('/wallet/balance/' + id).subscribe({
         next: (data) => {
           console.debug((new Date).toLocaleString(), 'wallet.balance response', data);
           if (data == null || !data.success) {
@@ -127,6 +120,41 @@ export class BackendService {
           }
         }
       });
+    });
+  }
+
+  public async getWalletHistory(): Promise<ResponseWalletHistory> {
+    return new Promise<ResponseWalletHistory>((resolve, reject) => {
+      this.createGetRequest<ResponseWalletHistory>('/wallet/history').subscribe({
+        next: (data) => {
+          console.debug((new Date).toLocaleString(), 'wallet.history response', data);
+          if (data == null || !data.success) {
+            console.error(data?.message ?? "");
+            reject(403); // send 403 back because received token is invalid
+          } else {
+            resolve(data);
+          }
+        },
+        error: (e) => {
+          if (e.status == 403) {
+            reject(403);
+          } else {
+            reject(e);
+          }
+        }
+      });
+    });
+  }
+
+  createGetRequest<T>(url: string) {
+    return this.http.get<T>(this.configService.config().apiUrl + (url[0] != '/' ? '/' : '') + url, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  createPostRequest<T>(url: string, body: string|null) {
+    return this.http.post<T>(this.configService.config().apiUrl + (url[0] != '/' ? '/' : '') + url, body ?? '', {
+      headers: this.getAuthHeaders(),
     });
   }
 

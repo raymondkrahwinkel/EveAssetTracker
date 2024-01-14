@@ -1,2 +1,17 @@
 <p>This is the dashboard!</p>
 <button (click)="test()" *ngIf="!environment.production">Test!</button>
+
+<p-table [value]="history" styleClass="p-datatable-gridlines" [tableStyle]="{ 'min-width': '50rem' }">
+  <ng-template pTemplate="header">
+    <tr>
+      <th>Date</th>
+      <th>Difference</th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-history>
+    <tr>
+      <td>{{ history.date }}</td>
+      <td>{{ (history.value - history.startValue) }}</td>
+    </tr>
+  </ng-template>
+</p-table>

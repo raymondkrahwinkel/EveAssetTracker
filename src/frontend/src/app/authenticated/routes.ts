@@ -3,6 +3,6 @@ import {Route} from "@angular/router";
 import {AuthenticatedComponent} from "./authenticated.component";
 
 export default[
-  { path: '', component: DashboardComponent, pathMatch: "full" },
+  { path: '', component: DashboardComponent, pathMatch: "full", data: { title: "Dashboard" } },
   { path: 'logout', component: AuthenticatedComponent }
 ] satisfies Route[];
