@@ -51,7 +51,7 @@ public class AuthenticationController {
     }
 
     @GetMapping("/auth/login/url")
-    public String getLoginUrl(@RequestParam UUID state, @RequestParam boolean ra, @RequestParam boolean ac, @RequestParam Optional<Integer> pc, @RequestParam Optional<UUID> session) throws URISyntaxException {
+    public String getLoginUrl(@RequestParam UUID state, @RequestParam boolean ra, @RequestParam boolean ac, @RequestParam(required = false) Integer pc, @RequestParam(required = false) UUID session) throws URISyntaxException {
         if(clientId == null) {
             throw new RuntimeException("Missing esi client id");
         } else if(callbackUrl == null) {
@@ -62,13 +62,15 @@ public class AuthenticationController {
         LoginStateDto loginState = new LoginStateDto(state);
         loginState.setReAuthenticate(ra);
         loginState.setAddCharacter(ac);
-        session.ifPresent(loginState::setSession);
+        if(session != null) {
+            loginState.setSession(session);
+        }
 
-        if(pc.isPresent()) {
+        if(pc != null && pc > 0) {
             // get the character information
-            Optional<CharacterDto> parentCharacter = characterRepository.findById(pc.get());
+            Optional<CharacterDto> parentCharacter = characterRepository.findById(pc);
             if(parentCharacter.isEmpty()) {
-                throw new IllegalArgumentException("Failed to get parent character with id: " + pc.get());
+                throw new IllegalArgumentException("Failed to get parent character with id: " + pc);
             }
 
             loginState.setParentCharacter(parentCharacter.get());
@@ -99,7 +101,7 @@ public class AuthenticationController {
                 parentCharacter = Optional.ofNullable(loginState.get().getParentCharacter());
             }
 
-            String token = authenticationService.validateCharacter(code, parentCharacter, !loginState.get().isAddCharacter());
+            String token = authenticationService.validateCharacter(code, parentCharacter.orElse(null), !loginState.get().isAddCharacter());
             var response = new ResponseValidate("", true, token);
             if(loginState.get().isAddCharacter() && parentCharacter.isPresent() && token == null) {
                 // we need no new token, only the data update
