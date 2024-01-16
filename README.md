@@ -1,7 +1,7 @@
 Disclaimer: This is my first angular + java application ;) <br />
 <br />
 Development containers:
-<h3>Postgressql</h3>
+<h3>PostgresSQL</h3>
 docker run -d --name postgresql -p 5432:5432 -e "POSTGRES_PASSWORD=root" postgres <br />
 <h3>Docker builds</h3>
 docker build . -t [image] -f src/main/Dockerfile<br />
