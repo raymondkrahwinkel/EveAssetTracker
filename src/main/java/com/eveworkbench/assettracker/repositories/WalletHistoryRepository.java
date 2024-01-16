@@ -13,5 +13,5 @@ import java.util.Optional;
 public interface WalletHistoryRepository extends CrudRepository<WalletHistoryDto, Long> {
     List<WalletHistoryDto> findAllByCharacterOrderByDateDesc(CharacterDto characterDto);
     Optional<WalletHistoryDto> findByCharacterAndDate(CharacterDto character, Date date);
-    Optional<WalletHistoryDto> findByCharacterAndDateBeforeOrderByDateDesc(CharacterDto character, Date date);
+    Optional<WalletHistoryDto> findFirstByCharacterAndDateBeforeOrderByDateDesc(CharacterDto character, Date date);
 }

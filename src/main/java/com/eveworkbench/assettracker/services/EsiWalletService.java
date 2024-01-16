@@ -74,7 +74,7 @@ public class EsiWalletService extends EsiService {
                 walletHistoryRepository.save(walletHistory);
             } else if(walletHistory.getValue() == null) {
                 // get the previous wallet history
-                Optional<WalletHistoryDto> prevWalletHistory = walletHistoryRepository.findByCharacterAndDateBeforeOrderByDateDesc(character, Date.valueOf(LocalDate.now()));
+                Optional<WalletHistoryDto> prevWalletHistory = walletHistoryRepository.findFirstByCharacterAndDateBeforeOrderByDateDesc(character, Date.valueOf(LocalDate.now()));
                 if(prevWalletHistory.isPresent()) {
                     walletHistory.setStartValue(prevWalletHistory.get().getValue());
                     walletHistory.setValue(prevWalletHistory.get().getValue());
