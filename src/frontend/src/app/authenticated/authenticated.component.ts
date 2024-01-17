@@ -6,6 +6,7 @@ import {BackendService} from "../services/backend.service";
 import {TokenInformation} from "../models/tokenInformation";
 import {Character} from "../models/character";
 import Swal from 'sweetalert2';
+import {FormattingService} from "../services/formatting.service";
 
 @Component({
   selector: 'app-dashboard',
@@ -21,7 +22,7 @@ export class AuthenticatedComponent {
   protected walletValueDifference: number = 0;
   private sessionKeepAlive: boolean = true;
 
-  constructor(private backend: BackendService, private router: Router, protected authService: AuthService) {}
+  constructor(private backend: BackendService, private router: Router, protected authService: AuthService, protected formattingService: FormattingService) {}
 
   ngOnInit() {
     if(!this.authService.isAuthenticated()) {
@@ -36,7 +37,7 @@ export class AuthenticatedComponent {
       let token = localStorage.getItem("token");
       if(this.authService.isAuthenticated() && token != null && token.length > 1) {
         this.backend.logout()
-          .then((completed) => {
+          .then(() => {
             localStorage.removeItem("token");
             this.router.navigate(['auth/login'])
           });
@@ -61,20 +62,6 @@ export class AuthenticatedComponent {
 
   ngAfterViewInit() {
     this.ping();
-  }
-
-  formatIsk(value: number): string {
-    return new Intl.NumberFormat("nl-NL", {
-      maximumFractionDigits: 0
-    }).format(value);
-  }
-
-  formatDifferenceIsk(value: number): string {
-    if(value < 0) {
-      return '<span class="text-danger">' + this.formatIsk(value) + '</span>';
-    } else {
-      return '<span class="text-success">' + "+" + this.formatIsk(value) + '</span>';
-    }
   }
 
   async updateCharacterData() {
