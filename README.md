@@ -18,5 +18,6 @@ docker run -d --name frontend -p 80:80 -v [localPath]:/usr/share/nginx/html/app-
 - create view to search through your assets <br />
 - add run recording, create a snapshot of the current wallet value and calculate difference constantly until the recording is stopped (include ISK per hour) <br />
 - add setting to enable run/snapshot cleanup + interval days settings <br />
+- add theme override for bs5/project prime-ng <br />
   <br />
 * system to record your runs (like abysstracker before/after, only then for missions, deds, mining or other stuff you want to record) <br />
