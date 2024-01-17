@@ -1,7 +1,7 @@
 <p>This is the dashboard!</p>
 <button (click)="test()" *ngIf="!environment.production">Test!</button>
 
-<p-table [value]="history" styleClass="p-datatable-gridlines" [tableStyle]="{ 'min-width': '50rem' }">
+<p-table [value]="history" styleClass="p-datatable-gridlines table">
   <ng-template pTemplate="header">
     <tr>
       <th>Date</th>
@@ -11,7 +11,7 @@
   <ng-template pTemplate="body" let-history>
     <tr>
       <td>{{ history.date }}</td>
-      <td>{{ (history.value - history.startValue) }}</td>
+      <td [innerHTML]="formattingService.formatDifferenceIsk(history.value - history.startValue) + ' ISK'"></td>
     </tr>
   </ng-template>
 </p-table>

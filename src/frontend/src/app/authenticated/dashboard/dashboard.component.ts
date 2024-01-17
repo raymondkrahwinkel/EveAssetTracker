@@ -5,6 +5,7 @@ import {environment} from "../../../environments/environment";
 import {ConfigService} from "../../services/config.service";
 import {WalletHistory} from "../../models/wallethistory";
 import {TableModule} from "primeng/table";
+import {FormattingService} from "../../services/formatting.service";
 
 @Component({
   selector: 'app-dashboard',
@@ -16,7 +17,7 @@ import {TableModule} from "primeng/table";
 export class DashboardComponent {
   history: WalletHistory[] = [];
 
-  constructor(private backend: BackendService, private configService: ConfigService) {
+  constructor(private backend: BackendService, protected formattingService: FormattingService) {
 
   }
 
