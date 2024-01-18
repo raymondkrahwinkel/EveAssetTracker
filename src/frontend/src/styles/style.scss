@@ -1,13 +1,14 @@
 /* You can add global styles to this file, and also import other style files */
-@import "../../node_modules/primeng/resources/themes/bootstrap4-dark-blue/theme.css";
-@import "../../node_modules/primeng/resources/primeng.css";
-
-@import "variables";
+@import "../styles/variables";
 @import "../../node_modules/bootstrap/scss/bootstrap";
 //@import "../../node_modules/primeng/resources/themes/viva-dark/theme.css";
 
+@import "../styles/primeng-theme.css";
+@import "../../node_modules/primeng/resources/primeng.css";
 
 .navbar-dark,
 .navbar[data-bs-theme="dark"] {
   background-color: var(--navbar-bg-color)!important;
 }
+
+

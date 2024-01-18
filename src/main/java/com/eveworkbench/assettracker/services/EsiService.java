@@ -1,11 +1,9 @@
 package com.eveworkbench.assettracker.services;
 
 import com.eveworkbench.assettracker.factories.HttpClientFactory;
-import com.eveworkbench.assettracker.models.database.CharacterDto;
 import com.eveworkbench.assettracker.models.database.EsiEtagDto;
 import com.eveworkbench.assettracker.models.esi.EsiBaseResponse;
 import com.eveworkbench.assettracker.models.esi.OAuthResponse;
-import com.eveworkbench.assettracker.models.esi.WalletResponse;
 import com.eveworkbench.assettracker.repositories.CharacterRepository;
 import com.eveworkbench.assettracker.repositories.EsiEtagRepository;
 import com.google.gson.Gson;
@@ -13,7 +11,6 @@ import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.InvalidPropertyException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -190,13 +187,25 @@ public class EsiService {
     }
 
     protected Boolean interpretEsiResponse(EsiBaseResponse<?> response, HttpResponse<String> httpResponse) {
+        if(response == null) {
+            throw new IllegalArgumentException("ESI Response argument cannot be null");
+        }
+
+        if(httpResponse == null) {
+            throw new IllegalArgumentException("Http response object cannot be null");
+        }
+
+        if(httpResponse.headers() == null) {
+            throw new RuntimeException("Http response has no headers");
+        }
+
         // get the base ESI response information
         response.etag = httpResponse.headers().firstValue("ETag").orElse(null);
-        response.pages = httpResponse.headers().firstValue("X-Pages").map(Integer::getInteger).orElse(null);
+        response.pages = httpResponse.headers().firstValue("X-Pages").map(Integer::valueOf).orElse(null);
         response.statusCode = httpResponse.statusCode();
         response.contentModified = httpResponse.statusCode() != 304;
-        response.esiErrorLimitRemain = httpResponse.headers().firstValue("X-Esi-Error-Limit-Reset").map(Integer::getInteger).orElse(null);
-        response.esiErrorLimitReset = httpResponse.headers().firstValue("X-Esi-Error-Limit-Remain").map(Integer::getInteger).orElse(null);
+        response.esiErrorLimitRemain = httpResponse.headers().firstValue("X-Esi-Error-Limit-Remain").map(Integer::valueOf).orElse(null);
+        response.esiErrorLimitReset = httpResponse.headers().firstValue("X-Esi-Error-Limit-Reset").map(Integer::valueOf).orElse(null);
 
         // check if the status response is ok
         if(httpResponse.statusCode() == 420 /* Error limit */) {
