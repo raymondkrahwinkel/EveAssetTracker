@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {BackendService} from "../../services/backend.service";
 import {environment} from "../../../environments/environment";
-import {ConfigService} from "../../services/config.service";
 import {WalletHistory} from "../../models/wallethistory";
 import {TableModule} from "primeng/table";
 import {FormattingService} from "../../services/formatting.service";
@@ -20,6 +19,9 @@ export class DashboardComponent {
 
   constructor(private parent: AuthenticatedComponent, private backend: BackendService, protected formattingService: FormattingService) {
     this.parent.characterChanged.subscribe((character) => {
+      this.loadWalletHistory();
+    });
+    this.parent.walletChanged.subscribe((value) => {
       this.loadWalletHistory();
     });
   }

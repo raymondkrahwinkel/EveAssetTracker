@@ -25,6 +25,7 @@ export class AuthenticatedComponent {
 
   // events
   @Output() characterChanged: EventEmitter<Character> = new EventEmitter();
+  @Output() walletChanged: EventEmitter<number> = new EventEmitter();
 
   constructor(private backend: BackendService, private router: Router, protected authService: AuthService, protected formattingService: FormattingService) {}
 
@@ -77,8 +78,11 @@ export class AuthenticatedComponent {
   async updateWallet() {
     if(this.character != null) {
       this.backend.getWallet(this.character?.id).then((data) => {
-        this.walletValue = data.data;
-        this.walletValueDifference = data.difference ?? 0;
+        if(this.walletValue != data.data) {
+          this.walletChanged.emit(data.data);
+          this.walletValue = data.data;
+          this.walletValueDifference = data.difference ?? 0;
+        }
       });
     }
   }
