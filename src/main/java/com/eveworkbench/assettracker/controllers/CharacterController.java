@@ -36,14 +36,44 @@ public class CharacterController {
         this.esiWalletService = esiWalletService;
     }
 
-    @GetMapping("/character/{id}")
-    public ResponseEntity<ResponseBaseWithData<CharacterDto>> get(@PathVariable("id") Integer id) {
-        Optional<CharacterDto> character = characterRepository.findById(id);
-        if(character.isEmpty()) {
-            return ResponseEntity.ok(new ResponseBaseWithData<>("Cannot get character with id: " + id, false, null));
+    @GetMapping("/character")
+    public ResponseEntity<ResponseBaseWithData<CharacterDto>> get() {
+        // get the current logged-in user information
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        Integer characterId = Integer.parseInt(auth.getPrincipal().toString());
+        String token = auth.getCredentials().toString();
+
+        // get the session information
+        Optional<SessionDto> session = sessionRepository.findByCharacterIdAndToken(characterId, token);
+        if(session.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ResponseBaseWithData<>("failed to get session", false, null));
         }
 
-        return ResponseEntity.ok(new ResponseBaseWithData<>("", true, character.get()));
+        return ResponseEntity.ok(new ResponseBaseWithData<>("", true, session.get().getCharacter()));
+    }
+
+    @GetMapping("/character/children")
+    public ResponseEntity<ResponseBaseWithData<List<CharacterDto>>> getChildren() {
+        // get the current logged-in user information
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        Integer characterId = Integer.parseInt(auth.getPrincipal().toString());
+        String token = auth.getCredentials().toString();
+
+        // get the session information
+        Optional<SessionDto> session = sessionRepository.findByCharacterIdAndToken(characterId, token);
+        if(session.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ResponseBaseWithData<>("failed to get session", false, null));
+        }
+
+        CharacterDto parent = session.get().getCharacter();
+        if(session.get().getCharacter().getParent() != null) {
+            parent = session.get().getCharacter().getParent();
+        }
+
+        List<CharacterDto> characters = characterRepository.findByIdOrParentOrderByName(parent.getId(), parent);
+        return ResponseEntity.ok(new ResponseBaseWithData<>("", true, characters.stream().filter(c -> !c.getId().equals(characterId)).distinct().toList()));
     }
 
     @GetMapping("/wallet/balance/{id}")

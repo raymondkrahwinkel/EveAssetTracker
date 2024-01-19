@@ -1,17 +1,20 @@
-<p>This is the dashboard!</p>
-<button (click)="test()" *ngIf="!environment.production">Test!</button>
+<!--<p>This is the dashboard!</p>-->
+<!--<button (click)="test()" *ngIf="!environment.production">Test!</button>-->
 
-<p-table [value]="history" styleClass="p-datatable-gridlines table">
+<p-table [value]="history" styleClass="p-datatable-striped p-datatable-sm" responsiveLayout="stack" [breakpoint]="'600px'">
+  <ng-template pTemplate="caption">Wallet history</ng-template>
   <ng-template pTemplate="header">
     <tr>
       <th>Date</th>
       <th>Difference</th>
+      <th>Value</th>
     </tr>
   </ng-template>
   <ng-template pTemplate="body" let-history>
     <tr>
       <td>{{ history.date }}</td>
       <td [innerHTML]="formattingService.formatDifferenceIsk(history.value - history.startValue) + ' ISK'"></td>
+      <td>{{ formattingService.formatIsk(history.value) }} ISK</td>
     </tr>
   </ng-template>
 </p-table>

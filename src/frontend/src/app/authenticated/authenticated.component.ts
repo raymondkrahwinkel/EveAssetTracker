@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {Component, EventEmitter, Output} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterOutlet} from "@angular/router";
 import {AuthService} from "../auth/auth.service";
@@ -18,9 +18,13 @@ import {FormattingService} from "../services/formatting.service";
 export class AuthenticatedComponent {
   protected authenticatedInformation: TokenInformation|null = null;
   protected character: Character|null = null;
+  protected children: Character[] = [];
   protected walletValue: number = 0;
   protected walletValueDifference: number = 0;
   private sessionKeepAlive: boolean = true;
+
+  // events
+  @Output() characterChanged: EventEmitter<Character> = new EventEmitter();
 
   constructor(private backend: BackendService, private router: Router, protected authService: AuthService, protected formattingService: FormattingService) {}
 
@@ -48,16 +52,7 @@ export class AuthenticatedComponent {
       return;
     }
 
-    // get the authenticated information
-    this.authenticatedInformation = this.authService.getAuthenticatedInformation();
-    if(this.authenticatedInformation) {
-      this.backend.getCharacter(this.authenticatedInformation.id).then((character) => {
-        this.character = character;
-        console.log("character data", character)
-
-        this.updateCharacterData();
-      });
-    }
+    this.updateCharacterData();
   }
 
   ngAfterViewInit() {
@@ -65,6 +60,21 @@ export class AuthenticatedComponent {
   }
 
   async updateCharacterData() {
+    // get the authenticated information
+    this.authenticatedInformation = this.authService.getAuthenticatedInformation();
+    if(this.authenticatedInformation && this.character?.id != this.authenticatedInformation.id) {
+      this.backend.getCharacter().then((character) => {
+        this.character = character;
+        this.characterChanged.emit(character);
+        this.updateWallet();
+        this.updateChildren();
+      });
+    } else if(this.authenticatedInformation && this.character) {
+      this.updateWallet();
+    }
+  }
+
+  async updateWallet() {
     if(this.character != null) {
       this.backend.getWallet(this.character?.id).then((data) => {
         this.walletValue = data.data;
@@ -73,12 +83,20 @@ export class AuthenticatedComponent {
     }
   }
 
+  async updateChildren() {
+    if(this.character != null) {
+      this.backend.getCharacterChildren().then((data) => {
+        this.children = data;
+      })
+    }
+  }
+
   async ping() {
     while(this.sessionKeepAlive) {
       if(this.authService.isAuthenticated()) {
         this.backend.ping().then(
-          (data) => {
-            localStorage.setItem("token", data.toString());
+          (response) => {
+            localStorage.setItem("token", response.data.toString());
             this.updateCharacterData();
           },
           (reason) => {
@@ -153,6 +171,36 @@ export class AuthenticatedComponent {
     this.backend.getLoginUrl(this.authenticatedInformation.token, true, false).then((data) => {
       window.location.href = data;
     });
+  }
+
+  onSwitchCharacterClick(characterId: number) : void {
+    this.backend.switch(characterId).then(
+      (response) => {
+        if(response.success) {
+          localStorage.setItem("token", response.data.toString());
+          this.updateCharacterData();
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: response.message
+          });
+          return;
+        }
+      },
+      (reason) => {
+        if(!this.sessionKeepAlive) {
+          return;
+        }
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed to switch character',
+          text: 'Reason: ' + reason
+        });
+        return;
+      }
+    );
   }
 
   sleep(ms : number) {
