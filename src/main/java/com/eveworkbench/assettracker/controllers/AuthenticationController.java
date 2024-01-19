@@ -75,7 +75,12 @@ public class AuthenticationController {
                 throw new IllegalArgumentException("Failed to get parent character with id: " + pc);
             }
 
-            loginState.setParentCharacter(parentCharacter.get());
+            // check if this character has a parent
+            if(parentCharacter.get().getParent() != null) {
+                loginState.setParentCharacter(parentCharacter.get().getParent());
+            } else {
+                loginState.setParentCharacter(parentCharacter.get());
+            }
         }
 
         loginStateRepository.save(loginState);
