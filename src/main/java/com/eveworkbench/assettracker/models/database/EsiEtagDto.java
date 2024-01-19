@@ -5,12 +5,11 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 @Table(name = "esi_etags")
 public class EsiEtagDto {
-    public static final String TABLE_NAME = "";
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,6 +24,9 @@ public class EsiEtagDto {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "esiEtag", fetch = FetchType.LAZY)
+    private Set<CharacterAssetDto> assets;
 
     public Long getId() {
         return id;
@@ -64,5 +66,13 @@ public class EsiEtagDto {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Set<CharacterAssetDto> getAssets() {
+        return assets;
+    }
+
+    public void setAssets(Set<CharacterAssetDto> assets) {
+        this.assets = assets;
     }
 }

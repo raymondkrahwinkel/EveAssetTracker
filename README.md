@@ -13,6 +13,9 @@ docker run -d --name frontend -p 80:80 -v [localPath]:/usr/share/nginx/html/app-
 <h3>Todo:</h3>
 ~~- add reusable unit tests for EsiService.interpretEsiResponse~~ <br />
 ~~- add switch system between characters (backend + frontend)~~ <br />
+- add /characters/{character_id}/assets/names/ POST to lookup names of containers
+- add esi type download
+- add station download
 - create overview to show the wallet history per day (table date,startValue,value,difference) <br />
 - create system to download your assets and create estimated character value <br />
 - create view to search through your assets <br />

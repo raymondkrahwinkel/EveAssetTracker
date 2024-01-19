@@ -2,16 +2,16 @@ package com.eveworkbench.assettracker.services;
 
 import com.eveworkbench.assettracker.factories.HttpClientFactory;
 import com.eveworkbench.assettracker.models.database.CharacterDto;
+import com.eveworkbench.assettracker.models.esi.AssetResponse;
 import com.eveworkbench.assettracker.models.esi.WalletResponse;
+import com.eveworkbench.assettracker.repositories.CharacterAssetRepository;
 import com.eveworkbench.assettracker.repositories.CharacterRepository;
 import com.eveworkbench.assettracker.repositories.EsiEtagRepository;
 import com.eveworkbench.assettracker.repositories.WalletHistoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -20,7 +20,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.net.ssl.SSLSession;
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
@@ -40,7 +39,7 @@ import static org.mockito.Mockito.when;
 @TestPropertySource(locations="classpath:application-test.properties")
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT) // this is needed because we have a base setup for the httpClient and one test that doesn't use httpClient
-public class EsiWalletServiceTests {
+public class EsiAssetServiceTests {
     @Mock
     private HttpClient httpClient;
 
@@ -54,35 +53,35 @@ public class EsiWalletServiceTests {
     private EsiEtagRepository esiEtagRepository;
 
     @Mock
-    private WalletHistoryRepository walletHistoryRepository;
+    private CharacterAssetRepository characterAssetRepository;
 
-    private EsiWalletService esiWalletService;
+    private EsiAssetService esiAssetService;
 
     @BeforeEach
     public void setup() {
-        esiWalletService = new EsiWalletService(characterRepository, httpClientFactory, esiEtagRepository, walletHistoryRepository);
+        esiAssetService = new EsiAssetService(characterRepository, httpClientFactory, esiEtagRepository, characterAssetRepository);
 
         when(httpClientFactory.create()).thenReturn(httpClient);
 
-        ReflectionTestUtils.setField(esiWalletService, "clientId", "test");
-        ReflectionTestUtils.setField(esiWalletService, "clientSecret", "test");
+        ReflectionTestUtils.setField(esiAssetService, "clientId", "test");
+        ReflectionTestUtils.setField(esiAssetService, "clientSecret", "test");
     }
 
     @Test
-    void getWallet_characterNotFound_Test() {
+    void getAssetsForCharacter_characterNotFound_Test() {
         // test not found character based on id
-        Throwable characterNotFoundException = assertThrows(RuntimeException.class, () -> esiWalletService.getWalletBalance(1));
+        Throwable characterNotFoundException = assertThrows(RuntimeException.class, () -> esiAssetService.getAssetsForCharacter(1));
         assertEquals(characterNotFoundException.getMessage(), "Cannot get character with id: 1");
     }
 
     @Test
-    void getWallet_esiTokenInvalid_Test() {
+    void getAssetsForCharacter_esiTokenInvalid_Test() {
         // create fake character
         CharacterDto characterDto = new CharacterDto();
         characterDto.setId(1);
 
         // test invalid esi token data
-        Optional<WalletResponse> esiTokenInvalidResponse = esiWalletService.getWalletBalance(characterDto);
+        Optional<AssetResponse> esiTokenInvalidResponse = esiAssetService.getAssetsForCharacter(characterDto);
         assertFalse(esiTokenInvalidResponse.isEmpty(), "Received response");
         assertTrue(esiTokenInvalidResponse.get().hasError, "Error flag has been set");
         assertEquals("No valid access token available for character", esiTokenInvalidResponse.get().error);
@@ -92,14 +91,14 @@ public class EsiWalletServiceTests {
         characterDto.setRefreshToken("testRefreshToken");
         characterDto.setTokenExpiresAt(Date.from(Instant.parse("2024-01-01T00:00:00Z")));
 
-        esiTokenInvalidResponse = esiWalletService.getWalletBalance(characterDto);
+        esiTokenInvalidResponse = esiAssetService.getAssetsForCharacter(characterDto);
         assertFalse(esiTokenInvalidResponse.isEmpty(), "Received response");
         assertTrue(esiTokenInvalidResponse.get().hasError, "Error flag has been set");
         assertEquals("No valid access token available for character", esiTokenInvalidResponse.get().error);
     }
 
     @Test
-    void getWallet_valid_Test() {
+    void getAssetsForCharacter_valid_Test() {
         // create fake character
         CharacterDto characterDto = new CharacterDto();
         characterDto.setId(1);
@@ -131,7 +130,7 @@ public class EsiWalletServiceTests {
 
             @Override
             public String body() {
-                return "20000";
+                return "[{\"is_singleton\":true,\"item_id\":1041251118068,\"location_flag\":\"Hangar\",\"location_id\":60006250,\"location_type\":\"station\",\"quantity\":1,\"type_id\":28665},{\"is_singleton\":true,\"item_id\":1034107072996,\"location_flag\":\"Hangar\",\"location_id\":60008494,\"location_type\":\"station\",\"quantity\":1,\"type_id\":17366}]";
             }
 
             @Override
@@ -153,10 +152,11 @@ public class EsiWalletServiceTests {
         when(httpClient.sendAsync(any(HttpRequest.class), any(HttpResponse.BodyHandlers.ofString().getClass())))
                 .thenReturn(CompletableFuture.completedFuture(mockResponse));
 
-        Optional<WalletResponse> walletResponse = esiWalletService.getWalletBalance(characterDto);
-        assertFalse(walletResponse.isEmpty());
-        assertFalse(walletResponse.get().hasError);
-        assertEquals(20000.0, walletResponse.get().value);
-        assertEquals(0,walletResponse.get().difference);
+        Optional<AssetResponse> assetResponse = esiAssetService.getAssetsForCharacter(characterDto);
+        assertFalse(assetResponse.isEmpty());
+        assertFalse(assetResponse.get().hasError);
+        assertEquals(2, assetResponse.get().value.size());
+        assertEquals(1041251118068L, assetResponse.get().value.get(0).item_id);
+        assertEquals("station", assetResponse.get().value.get(0).location_type);
     }
 }

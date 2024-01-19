@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
@@ -239,11 +240,6 @@ public class EsiService {
         }
 
         return true;
-    }
-
-    protected static <T extends EsiBaseResponse<T>> Optional<T> readValueGson(String content, Class<T> type) {
-        T value = (new Gson()).fromJson(content, new TypeToken<T>(){}.getType());
-        return Optional.ofNullable(value);
     }
     // endregion
 }

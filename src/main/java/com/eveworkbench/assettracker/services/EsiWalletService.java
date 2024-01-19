@@ -17,7 +17,6 @@ import java.time.LocalDate;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-// todo: add tests
 @Service
 public class EsiWalletService extends EsiService {
     WalletHistoryRepository walletHistoryRepository;

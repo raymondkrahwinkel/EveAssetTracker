@@ -28,6 +28,9 @@ public class CharacterDto {
     @OneToMany(mappedBy = "character", fetch = FetchType.LAZY)
     private Set<WalletHistoryDto> walletHistories;
 
+    @OneToMany(mappedBy = "character", fetch = FetchType.LAZY)
+    private Set<CharacterAssetDto> assets;
+
     private String name;
     private Date tokenExpiresAt;
     @Column(length = 2048)
@@ -140,5 +143,13 @@ public class CharacterDto {
 
     public void setWalletHistories(Set<WalletHistoryDto> walletHistories) {
         this.walletHistories = walletHistories;
+    }
+
+    public Set<CharacterAssetDto> getAssets() {
+        return assets;
+    }
+
+    public void setAssets(Set<CharacterAssetDto> assets) {
+        this.assets = assets;
     }
 }
