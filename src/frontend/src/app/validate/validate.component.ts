@@ -35,15 +35,12 @@ export class ValidateComponent {
     if(code != null && state != null) {
       // validate the code via the API
       let deviceInfo = this.deviceDetector.getDeviceInfo();
-      console.log(environment.production, this.configService.config().apiUrl);
       this.http.get<ResponseValidate>(this.configService.config().apiUrl + '/auth/validate?code=' + code + '&state=' + state + '&browser=' + deviceInfo.browser + '&deviceType=' + deviceInfo.deviceType + '&os=' + deviceInfo.os_version).subscribe({
         next: (data) => {
           // Success
           if(!data.childCharacterValidation) {
             localStorage.setItem("token", data.data);
           }
-
-          console.log('authentication call', data);
 
           // loggedin, redirect
           self.router.navigate(['/']);

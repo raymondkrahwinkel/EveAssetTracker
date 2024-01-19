@@ -1,6 +1,8 @@
 package com.eveworkbench.assettracker.controllers;
 
+import com.eveworkbench.assettracker.models.api.request.RequestSwitch;
 import com.eveworkbench.assettracker.models.api.response.ResponsePing;
+import com.eveworkbench.assettracker.models.api.response.ResponseSwitch;
 import com.eveworkbench.assettracker.models.api.response.ResponseValidate;
 import com.eveworkbench.assettracker.models.database.CharacterDto;
 import com.eveworkbench.assettracker.models.database.LoginStateDto;
@@ -167,5 +169,54 @@ public class AuthenticationController {
 
         String jwtToken = authenticationService.createToken(session.get().getCharacter(), session.get());
         return ResponseEntity.ok(new ResponsePing("", true, jwtToken));
+    }
+
+    @PostMapping("/auth/switch")
+    public ResponseEntity<ResponseSwitch> switchCharacter(@RequestBody RequestSwitch request) {
+        // get the current logged-in user information
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        Integer characterId = Integer.parseInt(auth.getPrincipal().toString());
+        String token = auth.getCredentials().toString();
+
+        // get the session information
+        Optional<SessionDto> session = sessionRepository.findByCharacterIdAndToken(characterId, token);
+        if(session.isEmpty()) {
+            return ResponseEntity.ok(new ResponseSwitch("Failed to get session information", false));
+        }
+
+        // get the character information
+        if(!session.get().getCharacter().getId().equals(characterId)) {
+            return ResponseEntity.ok(new ResponseSwitch("Failed to get character information", false));
+        }
+
+        CharacterDto parentCharacter = session.get().getCharacter();
+        if(session.get().getCharacter().getParent() != null) {
+            parentCharacter = session.get().getCharacter().getParent();
+        }
+
+        // check if we are authorized
+        if(!
+                (
+                        parentCharacter.getId().equals(request.id) || // main
+                        (parentCharacter.getParent() != null && parentCharacter.getParent().getId().equals(request.id)) || // parent
+                        parentCharacter.getChildren().stream().anyMatch(child -> child.getId().equals(request.id)) // child
+                )
+        ) {
+            return ResponseEntity.ok(new ResponseSwitch("You are not authorized to access this character", false));
+        }
+
+        // get the target character
+        var targetCharacter = characterRepository.findById(request.id);
+        if(targetCharacter.isEmpty()) {
+            return ResponseEntity.ok(new ResponseSwitch("Failed to get target character information", false));
+        }
+
+        // change the session to the target character
+        session.get().setCharacter(targetCharacter.get());
+        sessionRepository.save(session.get());
+
+        String jwtToken = authenticationService.createToken(session.get().getCharacter(), session.get());
+        return ResponseEntity.ok(new ResponseSwitch("", true, jwtToken));
     }
 }

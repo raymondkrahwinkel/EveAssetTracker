@@ -1,6 +1,7 @@
 package com.eveworkbench.assettracker.models.database;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -9,6 +10,7 @@ import java.util.Date;
 import java.util.Set;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer"})
 @Table(name = "characters")
 public class CharacterDto {
     @Id

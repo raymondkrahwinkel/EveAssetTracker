@@ -16,7 +16,6 @@ export class ConfigService {
             .get<AppConfig>('./app-config.json')
             .pipe(tap(config => {
               this.configuration = config;
-              console.log(this.configuration);
             }));
   }
 

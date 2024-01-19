@@ -11,7 +11,6 @@ export class AuthService {
   public isAuthenticated(): boolean {
     const token = localStorage.getItem("token");
     if(token == null || token?.length < 8) {
-      console.log('isAuthenticated', 'invalid token!');
       return false;
     }
 

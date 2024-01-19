@@ -6,6 +6,7 @@ import {ConfigService} from "../../services/config.service";
 import {WalletHistory} from "../../models/wallethistory";
 import {TableModule} from "primeng/table";
 import {FormattingService} from "../../services/formatting.service";
+import {AuthenticatedComponent} from "../authenticated.component";
 
 @Component({
   selector: 'app-dashboard',
@@ -17,11 +18,17 @@ import {FormattingService} from "../../services/formatting.service";
 export class DashboardComponent {
   history: WalletHistory[] = [];
 
-  constructor(private backend: BackendService, protected formattingService: FormattingService) {
-
+  constructor(private parent: AuthenticatedComponent, private backend: BackendService, protected formattingService: FormattingService) {
+    this.parent.characterChanged.subscribe((character) => {
+      this.loadWalletHistory();
+    });
   }
 
   ngOnInit() {
+    this.loadWalletHistory();
+  }
+
+  async loadWalletHistory() {
     this.backend.getWalletHistory().then((data) => {
       this.history = data.data;
     });

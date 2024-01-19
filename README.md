@@ -12,12 +12,15 @@ docker run -d --name frontend -p 80:80 -v [localPath]:/usr/share/nginx/html/app-
 
 <h3>Todo:</h3>
 ~~- add reusable unit tests for EsiService.interpretEsiResponse~~ <br />
-- add switch system between characters (backend + frontend) <br />
+~~- add switch system between characters (backend + frontend)~~ <br />
 - create overview to show the wallet history per day (table date,startValue,value,difference) <br />
 - create system to download your assets and create estimated character value <br />
 - create view to search through your assets <br />
 - add run recording, create a snapshot of the current wallet value and calculate difference constantly until the recording is stopped (include ISK per hour) <br />
 - add setting to enable run/snapshot cleanup + interval days settings <br />
-- add theme override for bs5/project prime-ng <br />
+~~- add theme override for bs5/project prime-ng~~ <br />
+- add health and ready checks to frontend and backend <br />
+- make session expire time configurable <br />
+- add session not-expire option <br />
   <br />
 * system to record your runs (like abysstracker before/after, only then for missions, deds, mining or other stuff you want to record) <br />

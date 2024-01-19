@@ -8,6 +8,8 @@ import {AuthService} from "../auth/auth.service";
 import {ResponseCharacterWallet} from "../models/api/response.character.wallet";
 import {ConfigService} from "./config.service";
 import {ResponseWalletHistory} from "../models/api/response.character.wallethistory";
+import {ResponseSwitch} from "../models/api/response.switch";
+import {RequestSwitch} from "../models/api/request.switch";
 
 @Injectable({
   providedIn: 'root'
@@ -24,7 +26,6 @@ export class BackendService {
 
     if(addCharacter) {
       let characterId = this.authService.getAuthenticatedInformation()?.id
-      console.log('character id', characterId);
       if(characterId != null) {
         params = params.append('pc', characterId);
       }
@@ -45,11 +46,39 @@ export class BackendService {
             console.error(data?.message ?? "");
             reject(403); // send 403 back because received token is invalid
           } else {
-            resolve(data.data);
+            resolve(data);
           }
         },
         error: (e) => {
-          console.log('ping error', e);
+          console.error('ping error', e);
+          if (e.status == 403) {
+            reject(403);
+            // localStorage.removeItem("token");
+            //
+            // // redirect to login page
+            // this.router.navigate(['auth/login']);
+          } else {
+            reject(e);
+          }
+        }
+      });
+    });
+  }
+
+  public async switch(characterId: number): Promise<ResponseSwitch> {
+    return new Promise<ResponseSwitch>((resolve, reject) => {
+      this.createPostRequest<ResponseSwitch>('/auth/switch', JSON.stringify(new RequestSwitch(characterId))).subscribe({
+        next: (data) => {
+          console.debug((new Date).toLocaleString(), 'switch response', data);
+          if (data == null || !data.success) {
+            console.error(data?.message ?? "");
+            reject(403); // send 403 back because received token is invalid
+          } else {
+            resolve(data);
+          }
+        },
+        error: (e) => {
+          console.error('switch error', e);
           if (e.status == 403) {
             reject(403);
             // localStorage.removeItem("token");
@@ -77,11 +106,34 @@ export class BackendService {
     });
   }
 
-  public async getCharacter(id: number): Promise<Character> {
+  public async getCharacter(): Promise<Character> {
     return new Promise<Character>((resolve, reject) => {
-      this.createGetRequest<ResponseBaseWithData<Character>>('/character/' + id).subscribe({
+      this.createGetRequest<ResponseBaseWithData<Character>>('/character').subscribe({
         next: (data) => {
           console.debug((new Date).toLocaleString(), 'character.get response', data);
+          if (data == null || !data.success) {
+            console.error(data?.message ?? "");
+            reject(403); // send 403 back because received token is invalid
+          } else {
+            resolve(data.data);
+          }
+        },
+        error: (e) => {
+          if (e.status == 403) {
+            reject(403);
+          } else {
+            reject(e);
+          }
+        }
+      });
+    });
+  }
+
+  public async getCharacterChildren(): Promise<Character[]> {
+    return new Promise<Character[]>((resolve, reject) => {
+      this.createGetRequest<ResponseBaseWithData<Character[]>>('/character/children').subscribe({
+        next: (data) => {
+          console.debug((new Date).toLocaleString(), 'character.children response', data);
           if (data == null || !data.success) {
             console.error(data?.message ?? "");
             reject(403); // send 403 back because received token is invalid
@@ -154,12 +206,27 @@ export class BackendService {
 
   createPostRequest<T>(url: string, body: string|null) {
     return this.http.post<T>(this.configService.config().apiUrl + (url[0] != '/' ? '/' : '') + url, body ?? '', {
+      headers: this.getAuthHeaders({ 'Content-Type': 'application/json' }),
+    });
+  }
+
+  createPutRequest<T>(url: string, body: string|null) {
+    return this.http.put<T>(this.configService.config().apiUrl + (url[0] != '/' ? '/' : '') + url, body ?? '', {
+      headers: this.getAuthHeaders({ 'Content-Type': 'application/json' }),
+    });
+  }
+
+  createDeleteRequest<T>(url: string) {
+    return this.http.delete<T>(this.configService.config().apiUrl + (url[0] != '/' ? '/' : '') + url, {
       headers: this.getAuthHeaders(),
     });
   }
 
-  private getAuthHeaders(): HttpHeaders {
+  private getAuthHeaders(headers: any = {}): HttpHeaders {
     let token = localStorage.getItem("token");
-    return new HttpHeaders({'Authorization': 'Bearer ' + token });
+    headers['Authorization'] = 'Bearer ' + token;
+
+    // return new HttpHeaders({ 'Authorization': 'Bearer ' + token });
+    return new HttpHeaders(headers);
   }
 }
