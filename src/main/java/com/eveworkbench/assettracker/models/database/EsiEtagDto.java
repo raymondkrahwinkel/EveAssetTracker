@@ -5,12 +5,14 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
-@Table(name = "esi_etags")
+@Table(name = "esi_etags", indexes = {
+        @Index(name = "idx_etag", columnList = "etag"),
+        @Index(name = "idx_url", columnList = "url"),
+})
 public class EsiEtagDto {
-    public static final String TABLE_NAME = "";
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -18,13 +20,22 @@ public class EsiEtagDto {
     @Column(length = 2048)
     private String url;
 
+    @Column(length = 255)
     private String etag;
+
+    private Integer lastNumberOfPages;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "esiEtag", fetch = FetchType.LAZY)
+    private Set<EsiTypeDto> types;
+
+    @OneToMany(mappedBy = "esiEtag", fetch = FetchType.LAZY)
+    private Set<EsiTypeDto> esiListEtag;
 
     public Long getId() {
         return id;
@@ -64,5 +75,29 @@ public class EsiEtagDto {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Set<EsiTypeDto> getTypes() {
+        return types;
+    }
+
+    public void setTypes(Set<EsiTypeDto> types) {
+        this.types = types;
+    }
+
+    public Set<EsiTypeDto> getEsiListEtag() {
+        return esiListEtag;
+    }
+
+    public void setEsiListEtag(Set<EsiTypeDto> esiListEtag) {
+        this.esiListEtag = esiListEtag;
+    }
+
+    public Integer getLastNumberOfPages() {
+        return lastNumberOfPages;
+    }
+
+    public void setLastNumberOfPages(Integer lastNumberOfPages) {
+        this.lastNumberOfPages = lastNumberOfPages;
     }
 }

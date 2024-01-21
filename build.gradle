@@ -19,6 +19,8 @@ repositories {
 dependencies {
     implementation 'com.auth0:java-jwt:4.4.0'
     implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -27,6 +29,8 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
 
     testRuntimeOnly 'com.h2database:h2'
+
+    testAnnotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

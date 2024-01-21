@@ -186,6 +186,21 @@ public class EsiService {
         return builder;
     }
 
+    protected HttpRequest.Builder getAnonymousHttpRequestBuilder(String url) throws URISyntaxException {
+        // create request for authentication
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(new URI(url))
+                .header("Content-Type", "application/x-www-form-urlencoded");
+
+        // get the etag information
+        Optional<EsiEtagDto> etagDto = esiEtagRepository.findByUrlIgnoreCase(url);
+        if(etagDto.isPresent()) {
+            builder = builder.header("If-None-Match", etagDto.get().getEtag());
+        }
+
+        return builder;
+    }
+
     protected Boolean interpretEsiResponse(EsiBaseResponse<?> response, HttpResponse<String> httpResponse) {
         if(response == null) {
             throw new IllegalArgumentException("ESI Response argument cannot be null");
@@ -201,6 +216,10 @@ public class EsiService {
 
         // get the base ESI response information
         response.etag = httpResponse.headers().firstValue("ETag").orElse(null);
+        if(response.etag != null && response.etag.startsWith("W/")) {
+            response.etag = response.etag.replace("W/\"", "").replaceAll("\"", "");
+        }
+
         response.pages = httpResponse.headers().firstValue("X-Pages").map(Integer::valueOf).orElse(null);
         response.statusCode = httpResponse.statusCode();
         response.contentModified = httpResponse.statusCode() != 304;
@@ -224,25 +243,24 @@ public class EsiService {
         }
 
         // store the ETag to the database
-        Optional<String> etagValue = httpResponse.headers().firstValue("ETag");
-        if(etagValue.isPresent()) {
-            String etag = etagValue.get();
-            if(etag.startsWith("W/")) {
-                etag = etag.replace("\"", "");
-            }
-
+        if(response.etag != null) {
             String url = httpResponse.uri().toString();
             EsiEtagDto etagDto = esiEtagRepository.findByUrlIgnoreCase(url).orElse(new EsiEtagDto());
-            etagDto.setUrl(url);
-            etagDto.setEtag(etag);
-            esiEtagRepository.save(etagDto);
+            if(!response.contentModified && etagDto.getUrl() != null) {
+                response.pages = etagDto.getLastNumberOfPages();
+            } else {
+                etagDto.setUrl(url);
+                etagDto.setEtag(response.etag);
+                etagDto.setLastNumberOfPages(response.pages);
+                esiEtagRepository.save(etagDto);
+            }
         }
 
         return true;
     }
 
-    protected static <T extends EsiBaseResponse<T>> Optional<T> readValueGson(String content, Class<T> type) {
-        T value = (new Gson()).fromJson(content, new TypeToken<T>(){}.getType());
+    protected static <T extends EsiBaseResponse<?>> Optional<T> readValueGson(String content, TypeToken<?> tokenType) {
+        T value = (new Gson()).fromJson(content, tokenType.getType());
         return Optional.ofNullable(value);
     }
     // endregion
