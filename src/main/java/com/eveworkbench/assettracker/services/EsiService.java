@@ -217,7 +217,11 @@ public class EsiService {
         // get the base ESI response information
         response.etag = httpResponse.headers().firstValue("ETag").orElse(null);
         if(response.etag != null && response.etag.startsWith("W/")) {
-            response.etag = response.etag.replace("W/\"", "").replaceAll("\"", "");
+            response.etag = response.etag.replace("W/\"", "");
+        }
+
+        if(response.etag != null && response.etag.contains("\"")) {
+            response.etag = response.etag.replace("\"", "");
         }
 
         response.pages = httpResponse.headers().firstValue("X-Pages").map(Integer::valueOf).orElse(null);

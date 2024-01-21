@@ -34,6 +34,8 @@ public class EsiTypeService extends EsiService {
             List<Integer> processedTypeIds = new ArrayList<>();
             int maxPages = 1;
             for(int page = 1; page <= maxPages; page++) {
+                System.out.println("ESI Types: page " + page + "/" + maxPages);
+
                 EsiBaseResponse<List<Integer>> response = new EsiBaseResponse<>() {
                 };
                 HttpRequest request = getAnonymousHttpRequestBuilder("https://esi.evetech.net/latest/universe/types/?page=" + page)
@@ -71,7 +73,8 @@ public class EsiTypeService extends EsiService {
             }
 
             // remove all non-processed assets
-            esiTypeRepository.deleteAllByIdNotIn(processedTypeIds);
+            // todo: check local whats needs to be deleted, max number of supported ids to database is 65535
+//            esiTypeRepository.deleteAllByIdNotIn(processedTypeIds);
 
             return true;
         } catch (URISyntaxException | InterruptedException | ExecutionException e) {
