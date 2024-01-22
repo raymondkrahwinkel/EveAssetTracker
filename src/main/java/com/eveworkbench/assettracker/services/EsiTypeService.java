@@ -13,11 +13,14 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.HTMLDocument;
 import java.net.URISyntaxException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -29,9 +32,12 @@ public class EsiTypeService extends EsiService {
         this.esiTypeRepository = esiTypeRepository;
     }
 
+    private List<EsiTypeDto> existingTypes = new ArrayList<>();
+
     public Boolean updateTypesFromEsi() {
         try {
             List<Integer> processedTypeIds = new ArrayList<>();
+
             int maxPages = 1;
             for(int page = 1; page <= maxPages; page++) {
                 System.out.println("ESI Types: page " + page + "/" + maxPages);
@@ -53,23 +59,38 @@ public class EsiTypeService extends EsiService {
 
                 maxPages = response.pages;
                 if (response.contentModified) {
+                    if(existingTypes.isEmpty()) {
+                        // preload the existing items from the database
+                        esiTypeRepository.findAll().forEach(existingTypes::add);
+                    }
+
                     // decode the incoming json
                     List<Integer> responseTypeIds = (new Gson()).fromJson(httpResponse.body(), new TypeToken<List<Integer>>() {}.getType());
 
                     // mark all the types as processed
-                    processedTypeIds.addAll(esiTypeRepository.findByEsiEtag_Etag(response.etag).stream().map(EsiTypeDto::getId).toList());
+//                    processedTypeIds.addAll(esiTypeRepository.findByEsiListEtag_Etag(response.etag).stream().map(EsiTypeDto::getId).toList());
 
                     // get the esi etag dto
                     EsiEtagDto listEtagDto = esiEtagRepository.findByEtagAndUrl(response.etag, request.uri().toString()).orElseThrow();
                     for(Integer typeId : responseTypeIds) {
                         if(!processType(typeId, listEtagDto)) {
+                            var re = response;
                             // todo: handle error
                         }
                     }
                 } else {
+                    // check if this is the first page
+                    if(page == 1) {
+                        // stop processing, nothing changed
+                        return true;
+                    }
+
                     // get the type ids based on the etag
                     processedTypeIds.addAll(esiTypeRepository.findByEsiListEtag_Etag(response.etag).stream().map(EsiTypeDto::getId).toList());
                 }
+
+                // after each page trigger save
+                esiTypeRepository.saveAll(existingTypes);
             }
 
             // remove all non-processed assets
@@ -108,11 +129,18 @@ public class EsiTypeService extends EsiService {
             Type responseType = (new Gson()).fromJson(httpResponse.body(), new TypeToken<Type>() {}.getType());
 
             // get the type information from the database
-            EsiTypeDto typeDto = esiTypeRepository.findById(typeId).orElse(new EsiTypeDto());
+            EsiTypeDto typeDto = existingTypes.stream().filter(t -> t.getId().equals(responseType.type_id)).findFirst().orElse(new EsiTypeDto());
+            if(typeDto.getId() == null) {
+                existingTypes.add(typeDto);
+            }
+
             typeDto.setEsiEtag(esiEtagDto);
             typeDto.setEsiListEtag(eTag);
             EsiTypeMapper.INSTANCE.toDto(responseType, typeDto);
-            esiTypeRepository.save(typeDto);
+        } else {
+            // update the list etag only
+            Optional<EsiTypeDto> typeDto = existingTypes.stream().filter(t -> t.getId().equals(typeId)).findFirst();
+            typeDto.ifPresent(esiTypeDto -> esiTypeDto.setEsiListEtag(eTag));
         }
 
         return true;
