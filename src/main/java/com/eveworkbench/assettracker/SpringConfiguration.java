@@ -52,8 +52,6 @@ public class SpringConfiguration {
             if(character.getTokenExpiresAt().before(Date.from(Instant.now().plus(Duration.ofMinutes(5))))) {
                 boolean tokenUpdated = authenticationService.characterRefreshAccessToken(character.getId());
                 System.out.println(character.getName() + " token refresh: " + tokenUpdated);
-            } else {
-                System.out.println(character.getName() + " no update needed");
             }
         }
 

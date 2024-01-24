@@ -9,15 +9,11 @@ import com.eveworkbench.assettracker.repositories.EsiEtagRepository;
 import com.eveworkbench.assettracker.repositories.WalletHistoryRepository;
 import org.springframework.stereotype.Service;
 
-import java.net.URISyntaxException;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
-// todo: add tests
 @Service
 public class EsiWalletService extends EsiService {
     WalletHistoryRepository walletHistoryRepository;
@@ -48,17 +44,7 @@ public class EsiWalletService extends EsiService {
                 return Optional.of(response);
             }
 
-            HttpRequest request = getBaseCharacterHttpRequestBuilder("https://esi.evetech.net/latest/characters/" + character.getId() + "/wallet/", character.getAccessToken())
-                    .GET()
-                    .build();
-
-            HttpResponse<String> httpResponse = httpClientFactory
-                    .create()
-                    .sendAsync(request, HttpResponse.BodyHandlers.ofString())
-//                    .thenApply(HttpResponse::body)
-//                    .thenApply(Double::parseDouble)
-                    .get();
-
+            HttpResponse<String> httpResponse = requestGet("https://esi.evetech.net/latest/characters/" + character.getId() + "/wallet/", character);
             if(!interpretEsiResponse(response, httpResponse)) {
                 return Optional.of(response);
             }
@@ -90,7 +76,7 @@ public class EsiWalletService extends EsiService {
             response.difference = (walletHistory.getValue() - walletHistory.getStartValue());
 
             return Optional.of(response);
-        } catch (URISyntaxException | InterruptedException | ExecutionException e) {
+        } catch (RuntimeException e) {
             logger.error("Error while loading wallet balance for " + character.getId(), e);
         }
 

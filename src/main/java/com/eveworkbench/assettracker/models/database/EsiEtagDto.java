@@ -9,8 +9,8 @@ import java.util.Set;
 
 @Entity
 @Table(name = "esi_etags", indexes = {
-        @Index(name = "idx_etag", columnList = "etag"),
-        @Index(name = "idx_url", columnList = "url"),
+        @Index(name = "idx_esi_etags_etag", columnList = "etag"),
+        @Index(name = "idx_esi_etags_url", columnList = "url"),
 })
 public class EsiEtagDto {
     @Id
@@ -30,12 +30,6 @@ public class EsiEtagDto {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
-    @OneToMany(mappedBy = "esiEtag", fetch = FetchType.LAZY)
-    private Set<EsiTypeDto> types;
-
-    @OneToMany(mappedBy = "esiEtag", fetch = FetchType.LAZY)
-    private Set<EsiTypeDto> esiListEtag;
 
     public Long getId() {
         return id;
@@ -75,22 +69,6 @@ public class EsiEtagDto {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public Set<EsiTypeDto> getTypes() {
-        return types;
-    }
-
-    public void setTypes(Set<EsiTypeDto> types) {
-        this.types = types;
-    }
-
-    public Set<EsiTypeDto> getEsiListEtag() {
-        return esiListEtag;
-    }
-
-    public void setEsiListEtag(Set<EsiTypeDto> esiListEtag) {
-        this.esiListEtag = esiListEtag;
     }
 
     public Integer getLastNumberOfPages() {

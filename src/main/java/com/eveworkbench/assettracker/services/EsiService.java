@@ -1,6 +1,7 @@
 package com.eveworkbench.assettracker.services;
 
 import com.eveworkbench.assettracker.factories.HttpClientFactory;
+import com.eveworkbench.assettracker.models.database.CharacterDto;
 import com.eveworkbench.assettracker.models.database.EsiEtagDto;
 import com.eveworkbench.assettracker.models.esi.EsiBaseResponse;
 import com.eveworkbench.assettracker.models.esi.OAuthResponse;
@@ -25,6 +26,8 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 // todo: set default user-agent
 
@@ -161,37 +164,16 @@ public class EsiService {
         return formBodyBuilder.toString();
     }
 
-    protected HttpRequest.Builder getBaseCharacterHttpRequestBuilder(String url, Integer characterId) throws URISyntaxException {
-        var character = characterRepository.findById(characterId);
-        if(character.isEmpty()) {
-            throw new RuntimeException("Cannot get character with id: " + characterId);
-        }
-
-        return getBaseCharacterHttpRequestBuilder(url, character.get().getAccessToken());
-    }
-
-    protected HttpRequest.Builder getBaseCharacterHttpRequestBuilder(String url, String accessToken) throws URISyntaxException {
-        // create request for authentication
-        HttpRequest.Builder builder = HttpRequest.newBuilder()
-                .uri(new URI(url))
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .header("Authorization", "Bearer " + accessToken);
-
-        // get the etag information
-        Optional<EsiEtagDto> etagDto = esiEtagRepository.findByUrlIgnoreCase(url);
-        if(etagDto.isPresent()) {
-            builder = builder.header("If-None-Match", etagDto.get().getEtag());
-        }
-
-        return builder;
-    }
-
-    protected HttpRequest.Builder getAnonymousHttpRequestBuilder(String url) throws URISyntaxException {
+    private HttpRequest.Builder buildHttpRequest(String url, String accessToken) throws URISyntaxException {
         // create request for authentication
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(new URI(url))
                 .header("Content-Type", "application/x-www-form-urlencoded");
 
+            if(accessToken != null) {
+                builder = builder.header("Authorization", "Bearer " + accessToken);
+            }
+
         // get the etag information
         Optional<EsiEtagDto> etagDto = esiEtagRepository.findByUrlIgnoreCase(url);
         if(etagDto.isPresent()) {
@@ -199,6 +181,46 @@ public class EsiService {
         }
 
         return builder;
+    }
+
+    protected HttpResponse<String> requestGet(String url) {
+        return requestGet(url, null, 0);
+    }
+
+    protected HttpResponse<String> requestGet(String url, CharacterDto character) {
+        return requestGet(url, character, 0);
+    }
+
+    protected HttpResponse<String> requestGet(String url, CharacterDto character, Integer retryCount) {
+        // create request for authentication
+        HttpRequest request;
+        try {
+            // build the get request
+            request = buildHttpRequest(url, character != null ? character.getAccessToken() : null)
+                    .GET()
+                    .build();
+
+            // execute the request and get the response as string
+            HttpResponse<String> httpResponse = httpClientFactory
+                    .create()
+                    .sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .get();
+
+            // check if we need to retry
+            if(httpResponse.statusCode() == 502 || httpResponse.statusCode() == 503 || httpResponse.statusCode() == 504) {
+                // check if we have hit the max retries
+                if(retryCount < 3) {
+                    // timeout for 5 seconds
+                    TimeUnit.SECONDS.sleep(5);
+                    httpResponse = requestGet(url, character, ++retryCount);
+                }
+            }
+
+            return httpResponse;
+        } catch (URISyntaxException | InterruptedException | ExecutionException e) {
+            // todo: log and handle error
+            throw new RuntimeException(e);
+        }
     }
 
     protected Boolean interpretEsiResponse(EsiBaseResponse<?> response, HttpResponse<String> httpResponse) {

@@ -6,9 +6,10 @@ import jakarta.persistence.*;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer"})
 @Table(name = "esi_types", indexes = {
-        @Index(name = "idx_esi_etag", columnList = "esi_etag_id"),
-        @Index(name = "idx_esi_list_etag", columnList = "esi_list_etag_id"),
-        @Index(name = "idx_group_id", columnList = "group_id")
+        @Index(name = "idx_esi_types_esi_etag", columnList = "esi_etag_id"),
+        @Index(name = "idx_esi_types_esi_list_etag", columnList = "esi_list_etag_id"),
+        @Index(name = "idx_esi_types_group_id", columnList = "group_id"),
+        @Index(name = "idx_esi_types_market_group_id", columnList = "market_group_id")
 })
 public class EsiTypeDto {
     @Id
@@ -27,11 +28,11 @@ public class EsiTypeDto {
     @Column(name = "description", length = 65535)
     private String description;
 
-    @Column(name = "group_id", nullable = false)
-    private int group_id;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private EsiTypeGroupDto group;
 
-    @Column(name = "market_group_id")
-    private int market_group_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private EsiMarketGroupDto marketGroup;
 
     @Column(name = "mass")
     private float mass;
@@ -80,22 +81,6 @@ public class EsiTypeDto {
         this.name = name;
     }
 
-    public int getGroup_id() {
-        return group_id;
-    }
-
-    public void setGroup_id(int group_id) {
-        this.group_id = group_id;
-    }
-
-    public int getMarket_group_id() {
-        return market_group_id;
-    }
-
-    public void setMarket_group_id(int market_group_id) {
-        this.market_group_id = market_group_id;
-    }
-
     public float getMass() {
         return mass;
     }
@@ -142,5 +127,21 @@ public class EsiTypeDto {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public EsiTypeGroupDto getGroup() {
+        return group;
+    }
+
+    public void setGroup(EsiTypeGroupDto group) {
+        this.group = group;
+    }
+
+    public EsiMarketGroupDto getMarketGroup() {
+        return marketGroup;
+    }
+
+    public void setMarketGroup(EsiMarketGroupDto marketGroup) {
+        this.marketGroup = marketGroup;
     }
 }
