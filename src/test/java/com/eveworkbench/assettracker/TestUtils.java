@@ -34,7 +34,7 @@ public abstract class TestUtils {
             @Override
             public HttpHeaders headers() {
                 HttpHeaders httpHeaders = mock(HttpHeaders.class);
-                when(httpHeaders.firstValue("X-Pages")).thenReturn(Optional.empty());
+                when(httpHeaders.firstValue("X-Pages")).thenReturn(Optional.of("1"));
                 when(httpHeaders.firstValue("X-Esi-Error-Limit-Remain")).thenReturn(Optional.of("100"));
                 when(httpHeaders.firstValue("X-Esi-Error-Limit-Reset")).thenReturn(Optional.of("30"));
                 when(httpHeaders.firstValue("ETag")).thenReturn(Optional.of(UUID.randomUUID().toString().replace("-", "")));

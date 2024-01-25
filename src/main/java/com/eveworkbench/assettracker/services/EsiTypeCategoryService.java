@@ -76,6 +76,8 @@ public class EsiTypeCategoryService extends EsiService {
                         }
                     });
                 }
+
+                return true;
             } else {
                 // stop processing, nothing changed
                 return true;
