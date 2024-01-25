@@ -7,14 +7,14 @@ logging.level.=error
 app.cors.origin=http://localhost:4200
 
 #database
-spring.datasource.url=jdbc:sqlserver://localhost;encrypt=true;trustServerCertificate=true;databaseName=Eveworkbench-AssetTracker-Dev
+spring.datasource.url=jdbc:postgresql://localhost:5432/eveworkbench-assettracker-dev
 spring.datasource.username=sa
 spring.datasource.password=password
 
 #jpa
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql = true
-spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.SQLServerDialect
+spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.generate-ddl=true
 spring.jpa.hibernate.ddl-auto=update
 

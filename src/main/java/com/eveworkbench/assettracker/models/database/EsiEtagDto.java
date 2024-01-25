@@ -5,12 +5,14 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
-@Table(name = "esi_etags")
+@Table(name = "esi_etags", indexes = {
+        @Index(name = "idx_esi_etags_etag", columnList = "etag"),
+        @Index(name = "idx_esi_etags_url", columnList = "url"),
+})
 public class EsiEtagDto {
-    public static final String TABLE_NAME = "";
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -18,7 +20,10 @@ public class EsiEtagDto {
     @Column(length = 2048)
     private String url;
 
+    @Column(length = 255)
     private String etag;
+
+    private Integer lastNumberOfPages;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -64,5 +69,13 @@ public class EsiEtagDto {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getLastNumberOfPages() {
+        return lastNumberOfPages;
+    }
+
+    public void setLastNumberOfPages(Integer lastNumberOfPages) {
+        this.lastNumberOfPages = lastNumberOfPages;
     }
 }
