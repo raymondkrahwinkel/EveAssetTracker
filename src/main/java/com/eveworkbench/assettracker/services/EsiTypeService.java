@@ -166,8 +166,9 @@ public class EsiTypeService extends EsiService {
             }
         }
 
-        if(typeDto != null)
+        if(typeDto != null) {
             esiTypeRepository.save(typeDto);
+        }
 
         return true;
     }

@@ -73,7 +73,7 @@ public class EsiTypeServiceTests {
     }
 
     @Test
-    void updateGroups_valid_Test() {
+    void updateTypes_valid_Test() {
         List<EsiTypeDto> storedItems = new ArrayList<>();
 
         when(esiTypeGroupRepository.findById(anyInt())).thenAnswer(invocationOnMock -> {
