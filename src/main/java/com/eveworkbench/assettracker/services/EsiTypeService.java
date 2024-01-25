@@ -66,7 +66,7 @@ public class EsiTypeService extends EsiService {
 //                    processedTypeIds.addAll(esiTypeRepository.findByEsiListEtag_Etag(response.etag).stream().map(EsiTypeDto::getId).toList());
 
                     // get the esi etag dto
-                    EsiEtagDto listEtagDto = esiEtagRepository.findByEtagAndUrl(response.etag, httpResponse.uri().toString()).orElseThrow();
+                    EsiEtagDto listEtagDto = esiEtagRepository.findTopByEtagAndUrl(response.etag, httpResponse.uri().toString()).orElseThrow();
 
                     int threadPoolSize = 5;
                     AtomicInteger counter = new AtomicInteger();
@@ -128,7 +128,7 @@ public class EsiTypeService extends EsiService {
         EsiTypeDto typeDto = null;
         if(response.contentModified) {
             // get etag
-            EsiEtagDto esiEtagDto = esiEtagRepository.findByEtagAndUrl(response.etag, httpResponse.uri().toString()).orElseThrow();
+            EsiEtagDto esiEtagDto = esiEtagRepository.findTopByEtagAndUrl(response.etag, httpResponse.uri().toString()).orElseThrow();
 
             // deserialize the received information
             Type responseType = (new Gson()).fromJson(httpResponse.body(), new TypeToken<Type>() {}.getType());

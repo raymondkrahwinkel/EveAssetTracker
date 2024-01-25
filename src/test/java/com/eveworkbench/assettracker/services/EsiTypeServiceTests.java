@@ -23,6 +23,7 @@ import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -74,7 +75,7 @@ public class EsiTypeServiceTests {
 
     @Test
     void updateTypes_valid_Test() {
-        List<EsiTypeDto> storedItems = new ArrayList<>();
+        List<EsiTypeDto> storedItems = Collections.synchronizedList(new ArrayList<>());
 
         when(esiTypeGroupRepository.findById(anyInt())).thenAnswer(invocationOnMock -> {
             Integer id = invocationOnMock.getArgument(0, Integer.class);

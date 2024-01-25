@@ -12,7 +12,7 @@ import {Title} from "@angular/platform-browser";
 })
 export class LoginComponent {
   loginUrl = '';
-  hasUrl : boolean = (this.loginUrl.length > 0);
+  apiIsAlive : boolean = false;
 
   // todo: add loading indicator when url is being loaded from the backend
 
@@ -22,14 +22,27 @@ export class LoginComponent {
     @Inject(DOCUMENT) private document: Document
   ) {
     this.titleService.setTitle("Login to eve online");
-    this.document.body.classList.add('text-center')
+    this.document.body.classList.add('text-center');
+    this.apiAliveCheck();
+  }
 
-    const self = this;
-    backend.getLoginUrl(null).then((url) => {
+  onBtnLoginClick() {
+    this.backend.getLoginUrl(null).then((url) => {
       if(url != null) {
-        self.loginUrl = url;
-        self.hasUrl = true;
+        window.location.href = url;
       }
+    });
+  }
+
+  private apiAliveCheck() {
+    this.backend.isAlive().then((isAlive) => {
+      if(!isAlive) {
+        setTimeout(() => this.apiAliveCheck(), 500);
+      } else {
+        this.apiIsAlive = isAlive;
+      }
+    }).catch((reason) => {
+      setTimeout(() => this.apiAliveCheck(), 500);
     });
   }
 }

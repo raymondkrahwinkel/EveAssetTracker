@@ -51,9 +51,9 @@ public class EsiMarketGroupService extends EsiService {
                 List<Integer> responseIds = (new Gson()).fromJson(httpResponse.body(), new TypeToken<List<Integer>>() {}.getType());
 
                 // get the esi etag dto
-                EsiEtagDto listEtagDto = esiEtagRepository.findByEtagAndUrl(response.etag, httpResponse.uri().toString()).orElseThrow();
+                EsiEtagDto listEtagDto = esiEtagRepository.findTopByEtagAndUrl(response.etag, httpResponse.uri().toString()).orElseThrow();
 
-                int threadPoolSize = 1;
+                int threadPoolSize = 5;
                 AtomicInteger counter = new AtomicInteger();
                 Collection<List<Integer>> chunks = responseIds.stream()
                         .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / threadPoolSize))
@@ -106,7 +106,7 @@ public class EsiMarketGroupService extends EsiService {
         EsiMarketGroupDto dto = null;
         if(response.contentModified) {
             // get etag
-            EsiEtagDto esiEtagDto = esiEtagRepository.findByEtagAndUrl(response.etag, httpResponse.uri().toString()).orElseThrow();
+            EsiEtagDto esiEtagDto = esiEtagRepository.findTopByEtagAndUrl(response.etag, httpResponse.uri().toString()).orElseThrow();
 
             // deserialize the received information
             MarketGroup decodedResponse = (new Gson()).fromJson(httpResponse.body(), new TypeToken<MarketGroup>() {}.getType());

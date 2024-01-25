@@ -9,6 +9,5 @@ import java.util.Optional;
 @Repository
 public interface EsiEtagRepository extends CrudRepository<EsiEtagDto, Long> {
     Optional<EsiEtagDto> findByUrlIgnoreCase(String url);
-    Optional<EsiEtagDto> findByEtagAndUrl(String etag, String url);
-
+    Optional<EsiEtagDto> findTopByEtagAndUrl(String etag, String url);
 }

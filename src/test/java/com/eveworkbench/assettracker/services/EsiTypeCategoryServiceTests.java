@@ -23,6 +23,7 @@ import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -67,7 +68,7 @@ public class EsiTypeCategoryServiceTests {
 
     @Test
     void updateCategories_valid_Test() {
-        List<EsiTypeCategoryDto> storedItems = new ArrayList<>();
+        List<EsiTypeCategoryDto> storedItems = Collections.synchronizedList(new ArrayList<>());
         when(esiTypeCategoryRepository.save(any())).thenAnswer((invocationOnMock -> {
             var value = invocationOnMock.getArgument(0, EsiTypeCategoryDto.class);
             storedItems.add(value);

@@ -41,7 +41,7 @@ public class SpringSecurityConfiguration {
     @Order(0)
     public SecurityFilterChain anonymousSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher("/test", "/auth/login/url", "/auth/validate")
+            .securityMatcher("/test", "/test/**", "/health/**", "/auth/login/url", "/auth/validate")
             .csrf(AbstractHttpConfigurer::disable)
             .cors((cors) -> cors.configurationSource(corsConfigurationSource()));
 

@@ -17,6 +17,16 @@ import {RequestSwitch} from "../models/api/request.switch";
 export class BackendService {
   constructor(private configService: ConfigService, private http: HttpClient, private authService: AuthService) { }
 
+  public async isAlive(): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      this.http.get(this.configService.config().apiUrl + '/health/live', { responseType: 'text' })
+        .subscribe({
+          next: (data) => resolve(data.toLowerCase() == 'ok'),
+          error: err => reject(err)
+        });
+    });
+  }
+
   public async getLoginUrl(session: string|null, addCharacter: boolean = false, reAuthentication: boolean = false): Promise<any> {
     let params = new HttpParams()
         .set('state', crypto.randomUUID())

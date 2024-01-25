@@ -30,11 +30,29 @@ public class TestController {
     @CrossOrigin
     public String Test()
     {
-        esiTypeCategoryService.updateCategories();
-        esiTypeGroupService.updateGroups();
-        esiMarketGroupService.updateGroups();
-
-        esiTypeService.updateTypesFromEsi();
         return "Hellow!";
+    }
+
+    @GetMapping("/test/types")
+    @CrossOrigin
+    public String TestTypes()
+    {
+        if(!esiTypeCategoryService.updateCategories()) {
+            return "Failed to update type category information";
+        }
+
+        if(!esiTypeGroupService.updateGroups()) {
+            return "Failed to update type group information";
+        }
+
+        if(!esiMarketGroupService.updateGroups()) {
+            return "Failed to update market group information";
+        }
+
+        if(!esiTypeService.updateTypesFromEsi()) {
+            return "Failed to update type information";
+        }
+
+        return "Done updating type information";
     }
 }

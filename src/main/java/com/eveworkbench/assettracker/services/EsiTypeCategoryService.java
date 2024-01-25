@@ -48,7 +48,7 @@ public class EsiTypeCategoryService extends EsiService {
                 List<Integer> responseIds = (new Gson()).fromJson(httpResponse.body(), new TypeToken<List<Integer>>() {}.getType());
 
                 // get the esi etag dto
-                EsiEtagDto listEtagDto = esiEtagRepository.findByEtagAndUrl(response.etag, httpResponse.uri().toString()).orElseThrow();
+                EsiEtagDto listEtagDto = esiEtagRepository.findTopByEtagAndUrl(response.etag, httpResponse.uri().toString()).orElseThrow();
 
                 int threadPoolSize = 5;
                 AtomicInteger counter = new AtomicInteger();
@@ -101,7 +101,7 @@ public class EsiTypeCategoryService extends EsiService {
 
         if(response.contentModified) {
             // get etag
-            EsiEtagDto esiEtagDto = esiEtagRepository.findByEtagAndUrl(response.etag, httpResponse.uri().toString()).orElseThrow();
+            EsiEtagDto esiEtagDto = esiEtagRepository.findTopByEtagAndUrl(response.etag, httpResponse.uri().toString()).orElseThrow();
 
             // deserialize the received information
             TypeCategory responseType = (new Gson()).fromJson(httpResponse.body(), new TypeToken<TypeCategory>() {}.getType());
